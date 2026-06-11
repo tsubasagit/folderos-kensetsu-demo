@@ -117,6 +117,7 @@
 <div class="tabs">
   <div class="tab active" data-v="hub">🗺️ 図面ハブ（可視化・突合）</div>
   <div class="tab" data-v="phone">📱 現場スマホ投入</div>
+  <div class="tab" data-v="sekisan">🧮 積算（拾い出し・入力支援）</div>
   <div class="tab" data-v="doc">📄 出力サンプル</div>
   <div class="tab" data-v="about">ℹ️ 3つの機能</div>
 </div>
@@ -196,6 +197,38 @@
       </ul>
       <p class="note">※ 機微なAI/OCR・突合・可視化などの処理は閉域網・完全ローカルで実行する設計です。</p>
     </div>
+  </div>
+</section>
+
+<!-- SEKISAN -->
+<section class="view" id="sekisan">
+  <div class="panelbox" style="margin-bottom:12px">
+    <h3>積算 — 図面からの「拾い出し」と入力支援</h3>
+    <p style="font-size:.88rem;line-height:1.7">FolderOSが<b>配管図・数量計算書から数量を自動で拾い出し</b>、御局の既存「積算システム」へ渡す入力を支援します。手入力・転記の手間とミスを減らし、完成数量との突合までつなげます。<b>積算計算・金額の確定は御局の既存システムで実施</b>し、FolderOSは置き換えません（拾い出し・入力支援・突合を担当）。</p>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px;font-size:.76rem">
+      <div style="flex:1;min-width:88px;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);text-align:center">図面・数量計算書</div>
+      <span style="color:var(--primary);font-weight:700">→</span>
+      <div style="flex:1;min-width:88px;border:1px solid var(--primary);border-radius:8px;padding:8px;background:#eef5fa;text-align:center"><b>FolderOS</b><br>数量拾い出し</div>
+      <span style="color:var(--primary);font-weight:700">→</span>
+      <div style="flex:1;min-width:88px;border:1px dashed #94a3b8;border-radius:8px;padding:8px;background:#fff;text-align:center">御局の積算システム<br>（既存・内製）</div>
+      <span style="color:var(--primary);font-weight:700">→</span>
+      <div style="flex:1;min-width:74px;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);text-align:center">積算金額</div>
+      <span style="color:var(--primary);font-weight:700">→</span>
+      <div style="flex:1;min-width:84px;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);text-align:center">完成数量と突合</div>
+    </div>
+  </div>
+  <div class="panelbox">
+    <h3>拾い出し ⇔ 積算入力 突合表</h3>
+    <table>
+      <tr><th>工区</th><th>科目</th><th>規格</th><th>拾い出し（FolderOS）</th><th>積算入力</th><th>突合</th></tr>
+      <tr><td>No.1</td><td class="l">配水管布設</td><td>φ150 FCD(GX)</td><td>45.0 m</td><td>45.0 m</td><td>✓</td></tr>
+      <tr><td>No.2</td><td class="l">配水管撤去</td><td>φ150 FCD(T)</td><td>12.0 m</td><td>12.0 m</td><td>✓</td></tr>
+      <tr><td>No.3</td><td class="l">配水管布設</td><td>φ150 FCD(CL)</td><td>8.5 m</td><td>8.5 m</td><td>✓</td></tr>
+      <tr class="warnrow"><td>No.4</td><td class="l">配水管布設</td><td>φ75 HPPE</td><td>5.6 m</td><td>5.0 m</td><td>⚠ 転記ミス</td></tr>
+      <tr><td>No.5</td><td class="l">弁・排泥工</td><td>仕切弁・排泥</td><td>一式</td><td>一式</td><td>✓</td></tr>
+    </table>
+    <p class="synth">※ 合成データ。FolderOSが拾い出し値と積算入力値を突合し、<b>No.4の転記ミス（5.6→5.0）を自動検出</b>。要確認だけを一覧化します。</p>
+    <button class="btn" style="max-width:300px" onclick="window.print()">🖨️ 御局の積算システムへ出力（CSV）／印刷</button>
   </div>
 </section>
 
@@ -369,6 +402,7 @@ function openPreview(type,k,fname){
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 
 render("k2");
+(function(){var m=location.search.match(/tab=(\w+)/);if(m){var t=document.querySelector('.tab[data-v="'+m[1]+'"]');if(t)t.click();}})();
 if(location.search.indexOf('p=detail')>=0)openPreview('detail','k2');
 if(location.search.indexOf('p=draw')>=0)openPreview('drawing');
 </script>
