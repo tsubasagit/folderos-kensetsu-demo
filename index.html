@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FolderOS 建設Form デモ — 図面起点ファイルビュー</title>
+<meta name="robots" content="index,follow">
+<style>
+  :root{--primary:#1f5b8c;--primary-d:#16446b;--accent:#538bb0;--ink:#1e293b;--sub:#64748b;--line:#e2e8f0;--bg:#f8fafc;
+        --done:#22c55e;--work:#f59e0b;--todo:#cbd5e1;--warn:#ef4444}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",sans-serif;color:var(--ink);background:var(--bg)}
+  header{background:var(--primary);color:#fff;padding:12px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  header .logo{font-weight:700}
+  header .tag{font-size:.72rem;background:rgba(255,255,255,.18);padding:3px 9px;border-radius:999px}
+  header .demo{font-size:.72rem;background:#b45309;padding:4px 10px;border-radius:999px;font-weight:700}
+  header .local{margin-left:auto;font-size:.74rem;background:#0f3a52;padding:5px 11px;border-radius:999px;font-weight:700}
+  .ribbon{background:#fff7ed;border-bottom:1px solid #fed7aa;color:#9a3412;font-size:.78rem;padding:6px 18px;text-align:center}
+  .work{padding:8px 18px;background:#fff;border-bottom:1px solid var(--line);font-size:.82rem;color:var(--sub);display:flex;gap:16px;flex-wrap:wrap}
+  .work b{color:var(--ink)}
+  .tabs{display:flex;gap:6px;padding:10px 18px 0;background:#fff;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .tab{padding:8px 14px;border:1px solid var(--line);border-bottom:none;border-radius:9px 9px 0 0;cursor:pointer;font-size:.86rem;font-weight:600;color:var(--sub);background:var(--bg)}
+  .tab.active{color:var(--primary);background:#fff;border-color:var(--primary);box-shadow:inset 0 -2px 0 var(--primary)}
+  .view{display:none;padding:16px 18px;max-width:1080px;margin:0 auto}
+  .view.active{display:block}
+  /* hub */
+  .kpis{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .kpi{flex:1;min-width:96px;border:1px solid var(--line);border-radius:10px;padding:8px;text-align:center;background:#fff}
+  .kpi .n{font-size:1.4rem;font-weight:700;line-height:1}.kpi .l{font-size:.68rem;color:var(--sub);margin-top:3px}
+  .kpi.done .n{color:var(--done)}.kpi.todo .n{color:#94a3b8}.kpi.warn .n{color:var(--warn)}
+  .hub{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}
+  @media(max-width:820px){.hub{grid-template-columns:1fr}}
+  .panelbox{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px}
+  .stage h3,.detail h3{font-size:.9rem;margin:0 0 8px}
+  svg.dwg{display:block;width:100%;height:auto;background:#fcfcfd;border:1px solid var(--line);border-radius:10px}
+  .seg{stroke-linecap:round;cursor:pointer;transition:stroke-width .15s,filter .15s}
+  .seg:hover{filter:drop-shadow(0 0 6px rgba(31,91,140,.6))}
+  .seg.sel{stroke-width:16;filter:drop-shadow(0 0 8px rgba(15,58,82,.85))}
+  .node{fill:#fff;stroke:#475569;stroke-width:2;cursor:pointer}
+  .lbl{font-size:13px;font-weight:700;fill:#334155;pointer-events:none}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:.72rem}
+  .legend i{width:11px;height:11px;border-radius:3px;display:inline-block;margin-right:4px;vertical-align:-1px}
+  .empty{color:var(--sub);font-size:.86rem;border:1px dashed var(--line);border-radius:10px;padding:26px 14px;text-align:center}
+  .badge{display:inline-block;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:999px;color:#fff}
+  .b-done{background:var(--done)}.b-todo{background:#94a3b8}.b-warn{background:var(--warn)}
+  .meta{font-size:.82rem;color:var(--sub);margin:8px 0 0}.meta b{color:var(--ink)}
+  .match{margin-top:10px;font-size:.84rem;border-radius:8px;padding:8px 10px}
+  .match.ok{background:#f0fdf4;border:1px solid #bbf7d0}.match.ng{background:#fef2f2;border:1px solid #fecaca}
+  .files{list-style:none;margin:6px 0 0;padding:0}
+  .files li{display:flex;gap:9px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-top:6px;font-size:.84rem}
+  .files li.lock{opacity:.5}.files li .sz{margin-left:auto;font-size:.7rem;color:var(--sub)}
+  /* phone */
+  .phonewrap{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start}
+  @media(max-width:720px){.phonewrap{grid-template-columns:1fr}}
+  .phone{background:#1e293b;border-radius:26px;padding:12px;width:260px;margin:0 auto}
+  .phone .scr{background:#fff;border-radius:18px;overflow:hidden}
+  .phone .bar{background:var(--primary);color:#fff;padding:10px 13px;font-size:.82rem;font-weight:700}
+  .phone .body{padding:12px 13px;font-size:.8rem}
+  .phone label{color:var(--sub);font-size:.72rem;display:block;margin-top:8px}
+  .phone select,.phone input{width:100%;border:1px solid var(--line);border-radius:7px;padding:7px 9px;font-size:.85rem;margin-top:3px;font-family:inherit}
+  .phone .thumbs{display:flex;gap:6px;margin-top:5px}
+  .phone .thumbs div{width:40px;height:40px;border:1px solid var(--line);border-radius:7px;background:var(--bg);display:flex;align-items:center;justify-content:center}
+  .btn{background:var(--primary);color:#fff;border:none;border-radius:9px;padding:10px;width:100%;margin-top:12px;font-weight:700;cursor:pointer;font-size:.9rem}
+  .btn:hover{background:var(--primary-d)}
+  .toast{margin-top:10px;font-size:.8rem;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px;display:none}
+  .note{font-size:.78rem;color:var(--sub);margin-top:6px}
+  .feat{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:6px}
+  @media(max-width:720px){.feat{grid-template-columns:1fr}}
+  .feat .c{border:1px solid var(--line);border-radius:10px;padding:11px 13px;background:#fff}
+  .feat .c b{color:var(--primary)}
+  /* doc */
+  .doc{background:#fff;border:1px solid var(--line);border-radius:10px;padding:20px;max-width:760px;margin:0 auto}
+  .doc h2{text-align:center;font-size:1.05rem;letter-spacing:.3em;margin:0 0 14px}
+  table{width:100%;border-collapse:collapse;font-size:.82rem}
+  th,td{border:1px solid #cbd5e1;padding:7px 9px;text-align:center}
+  th{background:var(--bg)}
+  td.l{text-align:left}.warnrow{background:#fef2f2}
+  footer{padding:14px 18px;font-size:.74rem;color:var(--sub);text-align:center;border-top:1px solid var(--line);background:#fff}
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">📁 FolderOS</span>
+  <span class="tag">建設Form</span>
+  <span class="demo">DEMO（イメージ）</span>
+  <span class="local">🔒 本番は閉域網内に導入</span>
+</header>
+<div class="ribbon">これは <b>合成データ</b> による画面イメージのデモです（実在の事業者・図面・数値ではありません）。本番はインターネットに接続しない閉域網・ローカルで運用します。</div>
+
+<div class="work">
+  <span>工事名：<b>配水小管布設替工事（みどり台一丁目地区）</b></span>
+  <span>工事番号：<b>第9001234号（架空）</b></span>
+  <span>受注者：<b>株式会社サンプル建設</b></span>
+  <span>工期：<b>2026.7.1〜11.30</b></span>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-v="hub">🗺️ 図面ハブ（可視化・突合）</div>
+  <div class="tab" data-v="phone">📱 現場スマホ投入</div>
+  <div class="tab" data-v="doc">📄 出力サンプル</div>
+  <div class="tab" data-v="about">ℹ️ 3つの機能</div>
+</div>
+
+<!-- HUB -->
+<section class="view active" id="hub">
+  <div class="kpis">
+    <div class="kpi"><div class="n">5</div><div class="l">全工区</div></div>
+    <div class="kpi done"><div class="n" id="kDone">3</div><div class="l">確認済</div></div>
+    <div class="kpi warn"><div class="n" id="kWarn">1</div><div class="l">⚠要確認</div></div>
+    <div class="kpi todo"><div class="n" id="kTodo">1</div><div class="l">未着手</div></div>
+  </div>
+  <div class="hub">
+    <div class="panelbox stage">
+      <h3>配管図（完成図）<span style="font-weight:400;color:var(--sub);font-size:.78rem">— 工区をクリック</span></h3>
+      <svg class="dwg" viewBox="0 0 400 420" id="svg">
+        <line class="seg" data-k="k1" x1="200" y1="30"  x2="200" y2="140" stroke="#22c55e" stroke-width="11"/>
+        <line class="seg" data-k="k2" x1="200" y1="140" x2="150" y2="235" stroke="#ef4444" stroke-width="11"/>
+        <line class="seg" data-k="k3" x1="150" y1="235" x2="205" y2="320" stroke="#22c55e" stroke-width="11"/>
+        <line class="seg" data-k="k4" x1="205" y1="320" x2="255" y2="395" stroke="#cbd5e1" stroke-width="11"/>
+        <line class="seg" data-k="k5" x1="205" y1="320" x2="115" y2="385" stroke="#22c55e" stroke-width="11"/>
+        <circle class="node" data-k="k1" cx="200" cy="140" r="9"/>
+        <circle class="node" data-k="k3" cx="205" cy="320" r="9"/>
+        <rect class="node" data-k="k5" x="107" y="377" width="16" height="16" rx="2"/>
+        <text class="lbl" x="210" y="90">No.1</text>
+        <text class="lbl" x="120" y="195">No.2</text>
+        <text class="lbl" x="170" y="285">No.3</text>
+        <text class="lbl" x="262" y="372">No.4</text>
+        <text class="lbl" x="64" y="360">No.5</text>
+      </svg>
+      <div class="legend">
+        <span><i style="background:var(--done)"></i>確認済</span>
+        <span><i style="background:var(--work)"></i>施工済・未確認</span>
+        <span><i style="background:var(--todo)"></i>未着手</span>
+        <span><i style="background:var(--warn)"></i>要確認</span>
+      </div>
+    </div>
+    <div class="panelbox detail">
+      <h3>工区の詳細</h3>
+      <div id="panel"><div class="empty">← 図面の工区（No.1〜No.5）をクリック</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PHONE -->
+<section class="view" id="phone">
+  <div class="phonewrap">
+    <div class="phone">
+      <div class="scr">
+        <div class="bar">📷 出来高・写真 投入</div>
+        <div class="body">
+          <label>工区</label>
+          <select id="pk">
+            <option value="k1">No.1工区</option>
+            <option value="k2" selected>No.2工区</option>
+            <option value="k3">No.3工区</option>
+            <option value="k4">No.4工区</option>
+            <option value="k5">No.5工区</option>
+          </select>
+          <label>出来高数量（m）</label>
+          <input id="pq" value="11.4" inputmode="decimal">
+          <label>写真・検査表</label>
+          <div class="thumbs"><div>📷</div><div>📷</div><div>📋</div><div>＋</div></div>
+          <button class="btn" id="psend">投入する</button>
+          <div class="toast" id="ptoast"></div>
+          <div class="note">📥 オフラインでも保存。閉域網に戻った時に同期。</div>
+        </div>
+      </div>
+    </div>
+    <div class="panelbox">
+      <h3>現場から「入力」まで一気通貫</h3>
+      <p style="font-size:.86rem;line-height:1.7">紙で上がっていた工事写真・検査表・出来高を、<b>現場（受注者）がスマホから投入</b>。データは工区に自動でひも付き、<b>左の図面ハブに即反映</b>されます（このデモでは投入すると該当工区が「施工済」に変わります）。</p>
+      <ul style="font-size:.84rem;line-height:1.8;padding-left:18px;margin:6px 0 0">
+        <li>担当工区のみ投入可（<b>機能制限</b>）</li>
+        <li>確認済データは編集不可</li>
+        <li>発注者・受注者で<b>相互検証</b></li>
+      </ul>
+      <p class="note">※ 機微なAI/OCR・突合・可視化などの処理は閉域網・完全ローカルで実行する設計です。</p>
+    </div>
+  </div>
+</section>
+
+<!-- DOC -->
+<section class="view" id="doc">
+  <div class="doc">
+    <h2>完 成 数 量 表</h2>
+    <p style="font-size:.8rem;color:var(--sub);text-align:right;margin:0 0 8px">工事番号 第9001234号 ／ 株式会社サンプル建設 ／ ※合成データ</p>
+    <table>
+      <tr><th>工区</th><th>管種・口径</th><th>区分</th><th>積算数量</th><th>完成数量</th><th>判定</th></tr>
+      <tr><td>No.1</td><td>φ150 FCD(GX)</td><td>新設</td><td>45.0 m</td><td>45.0 m</td><td>✓一致</td></tr>
+      <tr class="warnrow"><td>No.2</td><td>φ150 FCD(T)</td><td>撤去</td><td>12.0 m</td><td>11.4 m</td><td>⚠不一致</td></tr>
+      <tr><td>No.3</td><td>φ150 FCD(CL)</td><td>新設</td><td>8.5 m</td><td>8.5 m</td><td>✓一致</td></tr>
+      <tr><td>No.4</td><td>φ75 HPPE</td><td>新設</td><td>5.6 m</td><td>—</td><td>未施工</td></tr>
+      <tr><td>No.5</td><td>弁・排泥工</td><td>新設</td><td>一式</td><td>一式</td><td>✓一致</td></tr>
+    </table>
+    <p style="font-size:.82rem;margin-top:12px">FolderOSが図面・数量計算書・完成数量表を横串で突合し、<b>No.2の数量不一致（-0.6m）を自動検出</b>。要確認箇所だけを一覧化します。</p>
+    <button class="btn" style="max-width:220px" onclick="window.print()">🖨️ PDFで保存／印刷</button>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section class="view" id="about">
+  <div class="feat">
+    <div class="c"><b>① FolderOS（可視化）</b><p style="font-size:.84rem">散在ファイルを読み、1つのカテゴリに抽出・整理して見せる。ローカルで動作可能。</p></div>
+    <div class="c"><b>② 図面起点プレビュー</b><p style="font-size:.84rem">配管図を起点に、工区（フォルダ）ごとの進捗・突合を管理。</p></div>
+    <div class="c"><b>③ 現場投入アプリ</b><p style="font-size:.84rem">現場から②へ写真・出来高を投入（機能制限つき）。</p></div>
+  </div>
+  <div class="panelbox" style="margin-top:6px">
+    <p style="font-size:.86rem;line-height:1.7">本デモは画面イメージです。<b>本番は御局の閉域網内に同じ構成で導入</b>でき、機微情報を外部に出しません。実際の運用では、御局の実際の工事書類サンプルを用いて検証・具体化します。</p>
+  </div>
+</section>
+
+<footer>
+  FolderOS 建設Form デモ｜株式会社AppTalentHub　|　データはすべて合成（架空）。実在の事業者・図面・数値ではありません。本番は閉域網・完全ローカル運用。
+</footer>
+
+<script>
+const DATA={
+ k1:{name:"No.1工区",pipe:"φ150 FCD（GX継手）",kind:"新設",status:"done",est:"45.0 m",done:"45.0 m",sdate:"7/3",cdate:"7/5",
+     files:[["📐","配管詳細図②_No1.pdf","1.2MB",1],["📷","工事写真帳_No1（12枚）","8.4MB",1],["📋","部品検査表_No1.pdf","0.6MB",1],["🧮","積算明細_No1.csv","12KB",1]]},
+ k2:{name:"No.2工区",pipe:"φ150 FCD（T継手）",kind:"撤去",status:"warn",est:"12.0 m",done:"11.4 m",sdate:"7/9",cdate:"—",
+     files:[["📐","配管詳細図②_No2.pdf","1.1MB",1],["📷","工事写真帳_No2（9枚）","6.1MB",1],["📋","部品検査表_No2.pdf","0.5MB",1],["🧮","積算明細_No2.csv","11KB",1]]},
+ k3:{name:"No.3工区",pipe:"φ150 FCD（CL継手）",kind:"新設",status:"done",est:"8.5 m",done:"8.5 m",sdate:"7/9",cdate:"7/11",
+     files:[["📐","配管詳細図②_No3.pdf","0.9MB",1],["📷","工事写真帳_No3（7枚）","5.0MB",1],["📋","部品検査表_No3.pdf","0.5MB",1],["🧮","積算明細_No3.csv","9KB",1]]},
+ k4:{name:"No.4工区",pipe:"φ75 HPPE",kind:"新設",status:"todo",est:"5.6 m",done:"—",sdate:"—",cdate:"—",
+     files:[["📐","配管詳細図②_No4.pdf","0.8MB",1],["📷","工事写真帳_No4（未提出）","—",0],["📋","部品検査表_No4（未提出）","—",0],["🧮","積算明細_No4.csv","8KB",1]]},
+ k5:{name:"No.5工区（弁・排泥工）",pipe:"仕切弁・排泥設備",kind:"新設",status:"done",est:"一式",done:"一式",sdate:"7/9",cdate:"7/12",
+     files:[["📐","設備詳細図②_No5.pdf","0.7MB",1],["📷","工事写真帳_No5（10枚）","7.2MB",1],["📋","部品検査表_No5.pdf","0.6MB",1],["🧮","積算明細_No5.csv","10KB",1]]}
+};
+const COLOR={done:"#22c55e",work:"#f59e0b",todo:"#cbd5e1",warn:"#ef4444"};
+const BADGE={done:["b-done","確認済"],work:["b-work","施工済・未確認"],todo:["b-todo","未着手"],warn:["b-warn","⚠ 要確認"]};
+function render(k){
+  const d=DATA[k],[bc,bl]=BADGE[d.status];
+  const match=d.status==="warn"?`<div class="match ng">⚠ <b>数量不一致</b>：積算 ${d.est} ／ 完成 ${d.done}（差 -0.6m）→ 要確認</div>`
+    :(d.done==="—"?`<div class="match" style="background:var(--bg);border:1px solid var(--line);color:var(--sub)">未施工のため突合対象外</div>`
+    :`<div class="match ok">✓ <b>数量一致</b>：積算 ${d.est} ＝ 完成 ${d.done}</div>`);
+  const files=d.files.map(f=>`<li class="${f[3]?'':'lock'}"><span>${f[0]}</span><span>${f[1]}</span><span class="sz">${f[2]}</span></li>`).join("");
+  document.getElementById("panel").innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center"><strong>${d.name}</strong><span class="badge ${bc}">${bl}</span></div>
+    <p class="meta">管種：<b>${d.pipe}</b>　区分：<b>${d.kind}</b></p>
+    <p class="meta">施工日：<b>${d.sdate}</b>　確認日：<b>${d.cdate}</b></p>${match}
+    <div style="font-weight:700;font-size:.84rem;margin-top:12px">📎 この工区に紐づくファイル</div><ul class="files">${files}</ul>`;
+  document.querySelectorAll(".seg,.node").forEach(e=>e.classList.toggle("sel",e.dataset.k===k));
+}
+document.querySelectorAll(".seg,.node").forEach(e=>e.addEventListener("click",()=>render(e.dataset.k)));
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
+  t.classList.add("active");document.getElementById(t.dataset.v).classList.add("active");
+}));
+function recolor(k,status){
+  document.querySelectorAll(`.seg[data-k="${k}"]`).forEach(s=>s.setAttribute("stroke",COLOR[status]));
+}
+document.getElementById("psend").addEventListener("click",()=>{
+  const k=document.getElementById("pk").value,q=document.getElementById("pq").value;
+  DATA[k].done=q+" m";if(DATA[k].status==="todo"){DATA[k].status="work";recolor(k,"work");
+    document.getElementById("kTodo").textContent=Math.max(0,parseInt(document.getElementById("kTodo").textContent)-1);}
+  const t=document.getElementById("ptoast");t.style.display="block";
+  t.innerHTML=`✓ 投入しました（${DATA[k].name} ／ 出来高 ${q}m）。図面ハブに反映されました。`;
+});
+render("k2");
+</script>
+</body>
+</html>
