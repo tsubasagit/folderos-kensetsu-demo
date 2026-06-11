@@ -76,6 +76,26 @@
   th{background:var(--bg)}
   td.l{text-align:left}.warnrow{background:#fef2f2}
   footer{padding:14px 18px;font-size:.74rem;color:var(--sub);text-align:center;border-top:1px solid var(--line);background:#fff}
+  .linkbtn{margin-left:8px;font-size:.74rem;border:1px solid var(--primary);color:var(--primary);background:#fff;border-radius:7px;padding:3px 9px;cursor:pointer;font-weight:700}
+  .linkbtn:hover{background:var(--primary);color:#fff}
+  .files li{cursor:pointer}.files li.lock{cursor:default}
+  .files li:not(.lock):hover{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary) inset}
+  .modal{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:flex-start;justify-content:center;padding:22px 12px;z-index:50;overflow:auto}
+  .modal.open{display:flex}
+  .sheet{background:#fff;border-radius:10px;max-width:680px;width:100%;margin:auto;box-shadow:0 14px 44px rgba(0,0,0,.35)}
+  .sheet .shead{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .sheet .shead .fn{font-weight:700;font-size:.9rem}
+  .sheet .shead .pv{font-size:.66rem;background:#b45309;color:#fff;padding:2px 8px;border-radius:999px}
+  .sheet .shead .x{margin-left:auto;cursor:pointer;font-size:1.3rem;color:var(--sub);border:none;background:none;line-height:1}
+  .sheet .sbody{padding:16px}
+  .dwsheet{border:2px solid #334155;border-radius:4px;padding:12px}
+  .titleblk{display:grid;grid-template-columns:1fr 1fr;border:1px solid #334155;margin-top:10px;font-size:.72rem}
+  .titleblk div{border:.5px solid #94a3b8;padding:5px 7px}
+  .titleblk b{color:var(--ink)}
+  .photgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .photgrid .pt{border:1px solid var(--line);border-radius:7px;background:var(--bg);aspect-ratio:4/3;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.68rem;color:var(--sub);text-align:center}
+  .photgrid .pt span{font-size:1.5rem}
+  .synth{font-size:.72rem;color:var(--sub);margin-top:8px}
 </style>
 </head>
 <body>
@@ -111,7 +131,7 @@
   </div>
   <div class="hub">
     <div class="panelbox stage">
-      <h3>配管図（完成図）<span style="font-weight:400;color:var(--sub);font-size:.78rem">— 工区をクリック</span></h3>
+      <h3>配管図（完成図）<span style="font-weight:400;color:var(--sub);font-size:.78rem">— 工区をクリック</span><button class="linkbtn" onclick="openPreview('drawing')">📄 図面を開く</button></h3>
       <svg class="dwg" viewBox="0 0 400 420" id="svg">
         <line class="seg" data-k="k1" x1="200" y1="30"  x2="200" y2="140" stroke="#22c55e" stroke-width="11"/>
         <line class="seg" data-k="k2" x1="200" y1="140" x2="150" y2="235" stroke="#ef4444" stroke-width="11"/>
@@ -213,6 +233,13 @@
   FolderOS 建設Form デモ｜株式会社AppTalentHub　|　データはすべて合成（架空）。実在の事業者・図面・数値ではありません。本番は閉域網・完全ローカル運用。
 </footer>
 
+<div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="sheet">
+    <div class="shead"><span class="fn" id="mfn"></span><span class="pv">PDFプレビュー（イメージ）</span><button class="x" onclick="closeModal()">×</button></div>
+    <div class="sbody" id="mbody"></div>
+  </div>
+</div>
+
 <script>
 const DATA={
  k1:{name:"No.1工区",pipe:"φ150 FCD（GX継手）",kind:"新設",status:"done",est:"45.0 m",done:"45.0 m",sdate:"7/3",cdate:"7/5",
@@ -233,7 +260,7 @@ function render(k){
   const match=d.status==="warn"?`<div class="match ng">⚠ <b>数量不一致</b>：積算 ${d.est} ／ 完成 ${d.done}（差 -0.6m）→ 要確認</div>`
     :(d.done==="—"?`<div class="match" style="background:var(--bg);border:1px solid var(--line);color:var(--sub)">未施工のため突合対象外</div>`
     :`<div class="match ok">✓ <b>数量一致</b>：積算 ${d.est} ＝ 完成 ${d.done}</div>`);
-  const files=d.files.map(f=>`<li class="${f[3]?'':'lock'}"><span>${f[0]}</span><span>${f[1]}</span><span class="sz">${f[2]}</span></li>`).join("");
+  const files=d.files.map((f,i)=>`<li class="${f[3]?'':'lock'}" ${f[3]?`onclick="openFile('${k}',${i})"`:''}><span>${f[0]}</span><span>${f[1]}</span><span class="sz">${f[2]}</span></li>`).join("");
   document.getElementById("panel").innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center"><strong>${d.name}</strong><span class="badge ${bc}">${bl}</span></div>
     <p class="meta">管種：<b>${d.pipe}</b>　区分：<b>${d.kind}</b></p>
     <p class="meta">施工日：<b>${d.sdate}</b>　確認日：<b>${d.cdate}</b></p>${match}
@@ -256,7 +283,94 @@ document.getElementById("psend").addEventListener("click",()=>{
   const t=document.getElementById("ptoast");t.style.display="block";
   t.innerHTML=`✓ 投入しました（${DATA[k].name} ／ 出来高 ${q}m）。図面ハブに反映されました。`;
 });
+// ---- ファイル簡易プレビュー ----
+function fileType(name){
+  if(name.indexOf('詳細図')>=0)return 'detail';
+  if(name.indexOf('配管図')>=0)return 'drawing';
+  if(name.indexOf('写真帳')>=0)return 'photos';
+  if(name.indexOf('検査表')>=0)return 'inspect';
+  if(name.indexOf('積算')>=0)return 'csv';
+  return 'detail';
+}
+function openFile(k,i){const f=DATA[k].files[i];if(!f[3])return;openPreview(fileType(f[1]),k,f[1]);}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+const WORK='配水小管布設替工事（みどり台一丁目地区）';
+function seg(x1,y1,x2,y2,c){return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="9" stroke-linecap="round"/>`}
+function drawingSheet(){
+  const C=k=>COLOR[DATA[k].status];
+  return `<div class="dwsheet">
+    <div style="text-align:center;font-weight:700;letter-spacing:.25em">配 管 図 （完 成 図）</div>
+    <svg viewBox="0 0 400 300" style="width:100%;height:auto;margin-top:6px;background:#fcfcfd">
+      ${seg(200,24,200,110,C('k1'))}${seg(200,110,150,185,C('k2'))}${seg(150,185,205,250,C('k3'))}${seg(205,250,250,292,C('k4'))}${seg(205,250,120,288,C('k5'))}
+      <circle cx="200" cy="110" r="7" fill="#fff" stroke="#334155" stroke-width="2"/><circle cx="205" cy="250" r="7" fill="#fff" stroke="#334155" stroke-width="2"/>
+      <text x="208" y="72" font-size="11" font-weight="700" fill="#334155">No.1</text><text x="120" y="155" font-size="11" font-weight="700" fill="#334155">No.2</text>
+      <text x="168" y="222" font-size="11" font-weight="700" fill="#334155">No.3</text><text x="255" y="280" font-size="11" font-weight="700" fill="#334155">No.4</text><text x="78" y="270" font-size="11" font-weight="700" fill="#334155">No.5</text>
+    </svg></div>
+    <div class="titleblk">
+      <div>工事名<br><b>${WORK}</b></div><div>種別<br><b>完成図</b></div>
+      <div>工事番号<br><b>第9001234号（架空）</b></div><div>受注者<br><b>株式会社サンプル建設</b></div>
+      <div>工期<br><b>2026.7.1〜11.30</b></div><div>縮尺<br><b>N.T.S</b></div>
+    </div>
+    <p class="synth">※ 合成データの簡易プレビューです（実在の図面ではありません）。</p>`;
+}
+function detailSheet(d){
+  return `<div class="dwsheet">
+    <div style="text-align:center;font-weight:700;letter-spacing:.2em">配 管 詳 細 図</div>
+    <svg viewBox="0 0 520 190" style="width:100%;height:auto;margin-top:6px">
+      <line x1="50" y1="95" x2="470" y2="95" stroke="#1f5b8c" stroke-width="11" stroke-linecap="round"/>
+      <circle cx="50" cy="95" r="9" fill="#fff" stroke="#334155" stroke-width="2"/><circle cx="470" cy="95" r="9" fill="#fff" stroke="#334155" stroke-width="2"/>
+      <text x="260" y="78" text-anchor="middle" font-size="14" fill="#1f5b8c" font-weight="700">${d.pipe}</text>
+      <text x="50" y="124" text-anchor="middle" font-size="10" fill="#64748b">継手</text><text x="470" y="124" text-anchor="middle" font-size="10" fill="#64748b">継手</text>
+      <line x1="50" y1="150" x2="470" y2="150" stroke="#64748b" stroke-width="1"/>
+      <line x1="50" y1="143" x2="50" y2="157" stroke="#64748b"/><line x1="470" y1="143" x2="470" y2="157" stroke="#64748b"/>
+      <text x="260" y="170" text-anchor="middle" font-size="13" fill="#334155">L = ${d.est}</text>
+    </svg></div>
+    <div class="titleblk">
+      <div>工事名<br><b>${WORK}</b></div><div>工区<br><b>${d.name}</b></div>
+      <div>管種・口径<br><b>${d.pipe}</b></div><div>区分<br><b>${d.kind}</b></div>
+      <div>延長<br><b>${d.est}</b></div><div>受注者<br><b>株式会社サンプル建設</b></div>
+    </div>
+    <p class="synth">※ 合成データの簡易プレビューです。</p>`;
+}
+function photosSheet(d){
+  const tiles=[1,2,3,4,5,6].map(i=>`<div class="pt"><span>📷</span>写真 ${i}<br>${d.name}</div>`).join('');
+  return `<div class="photgrid">${tiles}</div><p class="synth">※ 合成のサンプル画像枠です（実写真ではありません）。各写真に工区・撮影日・位置が紐づく想定。</p>`;
+}
+function inspectSheet(d){
+  return `<table>
+    <tr><th>検査項目</th><th>規格</th><th>測定値</th><th>判定</th></tr>
+    <tr><td class="l">管径</td><td>φ150</td><td>150</td><td>合格</td></tr>
+    <tr><td class="l">継手接合</td><td>所定トルク</td><td>規定内</td><td>合格</td></tr>
+    <tr><td class="l">土被り</td><td>1.20m 以上</td><td>1.25m</td><td>合格</td></tr>
+    <tr><td class="l">水圧試験</td><td>0.75MPa</td><td>0.75MPa</td><td>合格</td></tr>
+  </table><p class="synth">※ 合成データ。${d.name} の部品検査表（イメージ）。</p>`;
+}
+function csvSheet(d){
+  return `<table>
+    <tr><th>科目</th><th>規格</th><th>数量</th><th>単価</th><th>金額</th></tr>
+    <tr><td class="l">配水管布設</td><td>${d.pipe}</td><td>${d.est}</td><td>¥●●</td><td>¥●●●</td></tr>
+    <tr><td class="l">継手</td><td>${d.pipe} 用</td><td>2 個</td><td>¥●●</td><td>¥●●</td></tr>
+    <tr><td class="l">土工・舗装復旧</td><td>一式</td><td>1 式</td><td>¥●●</td><td>¥●●●</td></tr>
+  </table><p class="synth">※ 合成データ。${d.name} の積算明細（イメージ）。金額はマスク。</p>`;
+}
+function openPreview(type,k,fname){
+  let body='';
+  if(type==='drawing'){fname='配管図（完成図）.pdf';body=drawingSheet();}
+  else{const d=DATA[k];
+    if(type==='detail'){body=detailSheet(d);}
+    else if(type==='photos'){body=photosSheet(d);}
+    else if(type==='inspect'){body=inspectSheet(d);}
+    else if(type==='csv'){body=csvSheet(d);}
+  }
+  document.getElementById('mfn').textContent=fname||'';
+  document.getElementById('mbody').innerHTML=body;
+  document.getElementById('modal').classList.add('open');
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
 render("k2");
+if(location.search.indexOf('p=detail')>=0)openPreview('detail','k2');
+if(location.search.indexOf('p=draw')>=0)openPreview('drawing');
 </script>
 </body>
 </html>
