@@ -99,6 +99,7 @@
   .ksg{cursor:pointer;transition:stroke-width .12s}
   .ksg:hover{stroke-width:13}
   .ksg.sel{stroke:#1f5b8c;stroke-width:14}
+  .newbadge{display:inline-block;background:#ea580c;color:#fff;font-size:.66rem;font-weight:700;padding:2px 9px;border-radius:999px;margin-left:8px;vertical-align:middle}
 </style>
 </head>
 <body>
@@ -117,12 +118,19 @@
   <span>工期：<b>2026.7.1〜11.30</b></span>
 </div>
 
+<div style="padding:9px 18px;background:#0f3a52;color:#fff;font-size:.82rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+  <b>本プロジェクトでAppTalentHubが新規開発：</b>
+  <span style="background:#ea580c;border-radius:6px;padding:2px 9px;font-weight:700">① スマホ現場入力</span><span style="opacity:.6">→</span>
+  <span style="background:#ea580c;border-radius:6px;padding:2px 9px;font-weight:700">② 積算入力</span><span style="opacity:.6">→</span>
+  <span style="background:#ea580c;border-radius:6px;padding:2px 9px;font-weight:700">③ 帳票出力</span>
+  <span style="opacity:.85;margin-left:6px">／ 既存の <b>FolderOS</b> が「整理・図面ハブ」で全体を連携</span>
+</div>
 <div class="tabs">
-  <div class="tab active" data-v="organize">🗂️ FolderOS：整理</div>
-  <div class="tab" data-v="hub">🗺️ 図面ハブ（可視化・突合）</div>
-  <div class="tab" data-v="phone">📱 現場入力（入力システム）</div>
-  <div class="tab" data-v="sekisan">🧮 積算システム（新・図面連動）</div>
-  <div class="tab" data-v="doc">📄 出力サンプル</div>
+  <div class="tab active" data-v="organize">🗂️ FolderOS：整理（既存）</div>
+  <div class="tab" data-v="hub">🗺️ 図面ハブ（既存）</div>
+  <div class="tab" data-v="phone">📱 現場入力 🆕</div>
+  <div class="tab" data-v="sekisan">🧮 積算入力 🆕</div>
+  <div class="tab" data-v="doc">📄 帳票出力 🆕</div>
 </div>
 
 <!-- HUB -->
@@ -198,6 +206,7 @@
 
 <!-- PHONE -->
 <section class="view" id="phone">
+  <h3 style="margin:0 0 10px">① スマホ現場入力 <span class="newbadge">🆕 AppTalentHubが新規開発</span></h3>
   <div class="phonewrap">
     <div class="phone">
       <div class="scr">
@@ -236,6 +245,7 @@
 
 <!-- SEKISAN -->
 <section class="view" id="sekisan">
+  <h3 style="margin:0 0 10px">② 積算入力 <span class="newbadge">🆕 AppTalentHubが新規開発</span></h3>
   <div class="panelbox" style="margin-bottom:12px">
     <h3>FolderOSが「積算システム」と「入力システム」のHUB</h3>
     <p style="font-size:.88rem;line-height:1.7">FolderOSは、現場の<b>入力システム</b>と<b>積算システム</b>の間に立つHUBです。図面・数量計算書から数量を拾い出し、両システムをつないで突合します。<b>積算システムが将来新しくなっても</b>、FolderOSがHUBとして整理・連携・突合を担い続けます。</p>
@@ -277,7 +287,7 @@
         <div id="sekHead" style="font-weight:700;font-size:.9rem;margin-bottom:6px">No.1工区 の積算明細</div>
         <table id="sekTable"></table>
         <div id="sekSub" style="text-align:right;margin-top:6px;font-size:.9rem">小計：<b>¥993,000</b></div>
-        <button class="btn" style="max-width:280px;margin-top:10px" onclick="window.print()">🖨️ 積算データを出力（CSV）／印刷</button>
+        <button class="btn" style="max-width:280px;margin-top:10px" onclick="switchTab('doc')">→ ③ 帳票を出力する</button>
       </div>
     </div>
     <p class="synth" style="margin-top:8px">※ 合成データ。図面ハブの工区と積算が連動。FolderOSが拾い出した数量を積算システムへ渡し、転記ミスを防ぎます。</p>
@@ -286,6 +296,8 @@
 
 <!-- DOC -->
 <section class="view" id="doc">
+  <h3 style="margin:0 0 6px">③ 帳票出力 <span class="newbadge">🆕 AppTalentHubが新規開発</span></h3>
+  <p style="font-size:.84rem;color:var(--sub);margin:0 0 10px">②積算入力をもとに、完成数量表などの帳票を自動生成します。</p>
   <div class="doc">
     <h2>完 成 数 量 表</h2>
     <p style="font-size:.8rem;color:var(--sub);text-align:right;margin:0 0 8px">工事番号 第9001234号 ／ 株式会社サンプル建設 ／ ※合成データ</p>
@@ -478,6 +490,7 @@ function renderSeki(k){
 }
 document.querySelectorAll('.ksg').forEach(function(s){s.addEventListener('click',function(){renderSeki(s.dataset.sk);});});
 renderSeki('k1');
+function switchTab(v){var t=document.querySelector('.tab[data-v="'+v+'"]');if(t)t.click();}
 
 render("k2");
 (function(){var m=location.search.match(/tab=(\w+)/);if(m){var t=document.querySelector('.tab[data-v="'+m[1]+'"]');if(t)t.click();}})();
