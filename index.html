@@ -96,6 +96,9 @@
   .photgrid .pt{border:1px solid var(--line);border-radius:7px;background:var(--bg);aspect-ratio:4/3;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.68rem;color:var(--sub);text-align:center}
   .photgrid .pt span{font-size:1.5rem}
   .synth{font-size:.72rem;color:var(--sub);margin-top:8px}
+  .ksg{cursor:pointer;transition:stroke-width .12s}
+  .ksg:hover{stroke-width:13}
+  .ksg.sel{stroke:#1f5b8c;stroke-width:14}
 </style>
 </head>
 <body>
@@ -103,9 +106,9 @@
   <span class="logo">📁 FolderOS</span>
   <span class="tag">建設Form</span>
   <span class="demo">DEMO（イメージ）</span>
-  <span class="local">🔒 本番は閉域網内に導入</span>
+  <span class="local">🔒 社内の内部データを処理</span>
 </header>
-<div class="ribbon">これは <b>合成データ</b> による画面イメージのデモです（実在の事業者・図面・数値ではありません）。本番はインターネットに接続しない閉域網・ローカルで運用します。</div>
+<div class="ribbon">これは <b>合成データ</b> による画面イメージのデモです（実在の事業者・図面・数値ではありません）。FolderOSが扱うのは取り込まれた社内の内部データで、機微な情報を外部に出しません（スマホ入力等はインターネットを利用）。</div>
 
 <div class="work">
   <span>工事名：<b>配水小管布設替工事（みどり台一丁目地区）</b></span>
@@ -118,7 +121,7 @@
   <div class="tab active" data-v="organize">🗂️ FolderOS：整理</div>
   <div class="tab" data-v="hub">🗺️ 図面ハブ（可視化・突合）</div>
   <div class="tab" data-v="phone">📱 現場入力（入力システム）</div>
-  <div class="tab" data-v="sekisan">🔗 積算連携（HUB）</div>
+  <div class="tab" data-v="sekisan">🧮 積算システム（新・図面連動）</div>
   <div class="tab" data-v="doc">📄 出力サンプル</div>
 </div>
 
@@ -226,7 +229,7 @@
         <li>確認済データは編集不可</li>
         <li>発注者・受注者で<b>相互検証</b></li>
       </ul>
-      <p class="note">※ 機微なAI/OCR・突合・可視化などの処理は閉域網・完全ローカルで実行する設計です。</p>
+      <p class="note">※ FolderOSが扱うのは、取り込まれた社内の内部データです（スマホ入力はインターネットを利用）。</p>
     </div>
   </div>
 </section>
@@ -251,17 +254,33 @@
     </div>
   </div>
   <div class="panelbox">
-    <h3>拾い出し ⇔ 積算入力 突合表</h3>
-    <table>
-      <tr><th>工区</th><th>科目</th><th>規格</th><th>拾い出し（FolderOS）</th><th>積算入力</th><th>突合</th></tr>
-      <tr><td>No.1</td><td class="l">配水管布設</td><td>φ150 FCD(GX)</td><td>45.0 m</td><td>45.0 m</td><td>✓</td></tr>
-      <tr><td>No.2</td><td class="l">配水管撤去</td><td>φ150 FCD(T)</td><td>12.0 m</td><td>12.0 m</td><td>✓</td></tr>
-      <tr><td>No.3</td><td class="l">配水管布設</td><td>φ150 FCD(CL)</td><td>8.5 m</td><td>8.5 m</td><td>✓</td></tr>
-      <tr class="warnrow"><td>No.4</td><td class="l">配水管布設</td><td>φ75 HPPE</td><td>5.6 m</td><td>5.0 m</td><td>⚠ 転記ミス</td></tr>
-      <tr><td>No.5</td><td class="l">弁・排泥工</td><td>仕切弁・排泥</td><td>一式</td><td>一式</td><td>✓</td></tr>
-    </table>
-    <p class="synth">※ 合成データ。FolderOSが拾い出し値と積算入力値を突合し、<b>No.4の転記ミス（5.6→5.0）を自動検出</b>。要確認だけを一覧化します。</p>
-    <button class="btn" style="max-width:300px" onclick="window.print()">🖨️ 積算システムへ連携（CSV）／印刷</button>
+    <h3>新しい積算システム（図面ハブ連動）</h3>
+    <p style="font-size:.84rem;line-height:1.6">将来このHUBの先に新しい積算システムを置けます。<b>図面ハブで工区を選ぶと、その工区の積算明細がここに連動表示</b>されます。FolderOSが図面・数量から科目と数量を積み上げ、積算システムへ渡します。</p>
+    <div style="display:grid;grid-template-columns:.78fr 1.22fr;gap:14px;margin-top:10px">
+      <div>
+        <div style="font-size:.74rem;color:var(--sub);margin-bottom:4px">図面ハブ（工区をクリック）</div>
+        <svg viewBox="0 0 260 300" style="width:100%;height:auto;background:#fcfcfd;border:1px solid var(--line);border-radius:8px">
+          <line class="ksg sel" data-sk="k1" x1="130" y1="22" x2="130" y2="100" stroke="#538bb0" stroke-width="9" stroke-linecap="round"/>
+          <line class="ksg" data-sk="k2" x1="130" y1="100" x2="92" y2="168" stroke="#538bb0" stroke-width="9" stroke-linecap="round"/>
+          <line class="ksg" data-sk="k3" x1="92" y1="168" x2="135" y2="228" stroke="#538bb0" stroke-width="9" stroke-linecap="round"/>
+          <line class="ksg" data-sk="k4" x1="135" y1="228" x2="175" y2="282" stroke="#538bb0" stroke-width="9" stroke-linecap="round"/>
+          <line class="ksg" data-sk="k5" x1="135" y1="228" x2="62" y2="280" stroke="#538bb0" stroke-width="9" stroke-linecap="round"/>
+          <text x="138" y="66" font-size="11" font-weight="700" fill="#334155">No.1</text>
+          <text x="62" y="140" font-size="11" font-weight="700" fill="#334155">No.2</text>
+          <text x="108" y="205" font-size="11" font-weight="700" fill="#334155">No.3</text>
+          <text x="180" y="270" font-size="11" font-weight="700" fill="#334155">No.4</text>
+          <text x="28" y="262" font-size="11" font-weight="700" fill="#334155">No.5</text>
+        </svg>
+        <div style="margin-top:8px;background:#0f3a52;color:#fff;border-radius:8px;padding:8px 10px;text-align:center;font-size:.8rem">工事 積算合計<br><b style="font-size:1.05rem">¥1,597,300</b></div>
+      </div>
+      <div>
+        <div id="sekHead" style="font-weight:700;font-size:.9rem;margin-bottom:6px">No.1工区 の積算明細</div>
+        <table id="sekTable"></table>
+        <div id="sekSub" style="text-align:right;margin-top:6px;font-size:.9rem">小計：<b>¥993,000</b></div>
+        <button class="btn" style="max-width:280px;margin-top:10px" onclick="window.print()">🖨️ 積算データを出力（CSV）／印刷</button>
+      </div>
+    </div>
+    <p class="synth" style="margin-top:8px">※ 合成データ。図面ハブの工区と積算が連動。FolderOSが拾い出した数量を積算システムへ渡し、転記ミスを防ぎます。</p>
   </div>
 </section>
 
@@ -284,7 +303,7 @@
 </section>
 
 <footer>
-  FolderOS 建設Form デモ｜株式会社AppTalentHub　|　データはすべて合成（架空）。実在の事業者・図面・数値ではありません。本番では機微な処理（突合・可視化・AI/OCR）を閉域網・ローカルで実行する設計です（現場入力等はセキュア接続）。
+  FolderOS 建設Form デモ｜株式会社AppTalentHub　|　データはすべて合成（架空）。実在の事業者・図面・数値ではありません。FolderOSが扱うのは取り込み済みの社内データで、機微な内部データを外部に出しません（スマホ入力等はインターネットを利用）。
 </footer>
 
 <div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
@@ -439,6 +458,26 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
     ob.textContent='✓ 整理しました';
   });
 })();
+
+// ---- 新しい積算システム（図面ハブ連動）----
+const SEKI={
+ k1:{name:'No.1工区',sub:'¥993,000',rows:[['配水管布設','φ150 FCD(GX)','45.0 m','¥12,000','¥540,000'],['継手','φ150 GX','6 箇所','¥8,000','¥48,000'],['土工・舗装復旧','—','45.0 m','¥9,000','¥405,000']]},
+ k2:{name:'No.2工区',sub:'¥157,000',rows:[['配水管撤去','φ150 FCD(T)','12.0 m','¥6,000','¥72,000'],['仮設・残土処分','一式','1 式','¥85,000','¥85,000']]},
+ k3:{name:'No.3工区',sub:'¥194,500',rows:[['配水管布設','φ150 FCD(CL)','8.5 m','¥12,000','¥102,000'],['継手','φ150 CL','2 箇所','¥8,000','¥16,000'],['土工・舗装復旧','—','8.5 m','¥9,000','¥76,500']]},
+ k4:{name:'No.4工区',sub:'¥72,800',rows:[['配水管布設','φ75 HPPE','5.6 m','¥7,000','¥39,200'],['土工・舗装復旧','—','5.6 m','¥6,000','¥33,600']]},
+ k5:{name:'No.5工区（弁・排泥工）',sub:'¥180,000',rows:[['仕切弁','φ150','1 基','¥120,000','¥120,000'],['排泥工','一式','1 式','¥60,000','¥60,000']]}
+};
+function renderSeki(k){
+  var d=SEKI[k];if(!d)return;
+  var hd=document.getElementById('sekHead');if(hd)hd.textContent=d.name+' の積算明細';
+  var rows='<tr><th>科目</th><th>規格</th><th>数量</th><th>単価</th><th>金額</th></tr>';
+  d.rows.forEach(function(r){rows+='<tr><td class="l">'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td><td>'+r[3]+'</td><td>'+r[4]+'</td></tr>';});
+  var tb=document.getElementById('sekTable');if(tb)tb.innerHTML=rows;
+  var sb=document.getElementById('sekSub');if(sb)sb.innerHTML='小計：<b>'+d.sub+'</b>';
+  document.querySelectorAll('.ksg').forEach(function(s){s.classList.toggle('sel',s.dataset.sk===k);});
+}
+document.querySelectorAll('.ksg').forEach(function(s){s.addEventListener('click',function(){renderSeki(s.dataset.sk);});});
+renderSeki('k1');
 
 render("k2");
 (function(){var m=location.search.match(/tab=(\w+)/);if(m){var t=document.querySelector('.tab[data-v="'+m[1]+'"]');if(t)t.click();}})();
