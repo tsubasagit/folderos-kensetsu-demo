@@ -120,14 +120,15 @@
 
 <div style="padding:9px 18px;background:#0f3a52;color:#fff;font-size:.82rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
   <b>本プロジェクトでAppTalentHubが新規開発：</b>
+  <span style="background:#ea580c;border-radius:6px;padding:2px 9px;font-weight:700">図面ハブ</span><span style="opacity:.6">＋</span>
   <span style="background:#ea580c;border-radius:6px;padding:2px 9px;font-weight:700">① スマホ現場入力</span><span style="opacity:.6">→</span>
   <span style="background:#ea580c;border-radius:6px;padding:2px 9px;font-weight:700">② 積算入力</span><span style="opacity:.6">→</span>
   <span style="background:#ea580c;border-radius:6px;padding:2px 9px;font-weight:700">③ 帳票出力</span>
-  <span style="opacity:.85;margin-left:6px">／ 既存の <b>FolderOS</b> が「整理・図面ハブ」で全体を連携</span>
+  <span style="opacity:.85;margin-left:6px">／ 既存の <b>FolderOS</b> が散在ファイルを整理</span>
 </div>
 <div class="tabs">
   <div class="tab active" data-v="organize">🗂️ FolderOS：整理（既存）</div>
-  <div class="tab" data-v="hub">🗺️ 図面ハブ（既存）</div>
+  <div class="tab" data-v="hub">🗺️ 図面ハブ 🆕</div>
   <div class="tab" data-v="phone">📱 現場入力 🆕</div>
   <div class="tab" data-v="sekisan">🧮 積算入力 🆕</div>
   <div class="tab" data-v="doc">📄 帳票出力 🆕</div>
@@ -137,7 +138,7 @@
 <!-- ORGANIZE -->
 <section class="view active" id="organize">
   <div class="panelbox" style="margin-bottom:12px">
-    <h3>FolderOS：散らかったファイルを「整理」</h3>
+    <h3>FolderOS：散らかったファイルを「整理」 <span class="newbadge" style="background:#64748b">既存：FolderOS</span></h3>
     <p style="font-size:.88rem;line-height:1.7">FolderOSの基本は、<b>既存の散在ファイルを内容ごとに読み取り、書類種別・工区へ自動で分類・整理</b>することです（ローカルで動作）。下の「整理する」を押すと、バラバラのファイルが整います。</p>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
@@ -166,6 +167,7 @@
 </section>
 
 <section class="view" id="hub">
+  <h3 style="margin:0 0 10px">🗺️ 図面ハブ <span class="newbadge">🆕 AppTalentHubが新規開発</span></h3>
   <div class="kpis">
     <div class="kpi"><div class="n">5</div><div class="l">全工区</div></div>
     <div class="kpi done"><div class="n" id="kDone">3</div><div class="l">確認済</div></div>
