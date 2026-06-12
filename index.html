@@ -115,15 +115,46 @@
 </div>
 
 <div class="tabs">
-  <div class="tab active" data-v="hub">🗺️ 図面ハブ（可視化・突合）</div>
-  <div class="tab" data-v="phone">📱 現場スマホ投入</div>
-  <div class="tab" data-v="sekisan">🧮 積算（拾い出し・入力支援）</div>
+  <div class="tab active" data-v="organize">🗂️ FolderOS：整理</div>
+  <div class="tab" data-v="hub">🗺️ 図面ハブ（可視化・突合）</div>
+  <div class="tab" data-v="phone">📱 現場入力（入力システム）</div>
+  <div class="tab" data-v="sekisan">🔗 積算連携（HUB）</div>
   <div class="tab" data-v="doc">📄 出力サンプル</div>
-  <div class="tab" data-v="about">ℹ️ 3つの機能</div>
 </div>
 
 <!-- HUB -->
-<section class="view active" id="hub">
+<!-- ORGANIZE -->
+<section class="view active" id="organize">
+  <div class="panelbox" style="margin-bottom:12px">
+    <h3>FolderOS：散らかったファイルを「整理」</h3>
+    <p style="font-size:.88rem;line-height:1.7">FolderOSの基本は、<b>既存の散在ファイルを内容ごとに読み取り、書類種別・工区へ自動で分類・整理</b>することです（ローカルで動作）。下の「整理する」を押すと、バラバラのファイルが整います。</p>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div class="panelbox">
+      <h3>整理前（散在）</h3>
+      <ul class="files" style="cursor:default">
+        <li style="cursor:default"><span>🖼️</span><span class="nm">IMG_20260903_1412.jpg</span></li>
+        <li style="cursor:default"><span>📄</span><span class="nm">スキャン0912.pdf</span></li>
+        <li style="cursor:default"><span>📊</span><span class="nm">数量計算書_最終2.xlsx</span></li>
+        <li style="cursor:default"><span>📄</span><span class="nm">検査表(コピー).pdf</span></li>
+        <li style="cursor:default"><span>🗂️</span><span class="nm">No2写真まとめ.zip</span></li>
+        <li style="cursor:default"><span>📈</span><span class="nm">積算入力_new.csv</span></li>
+        <li style="cursor:default"><span>📐</span><span class="nm">配管図_確定版.pdf</span></li>
+        <li style="cursor:default"><span>📊</span><span class="nm">部品リスト.xlsx</span></li>
+        <li style="cursor:default"><span>🖼️</span><span class="nm">DSC_0099.JPG</span></li>
+        <li style="cursor:default"><span>📝</span><span class="nm">メモ_出来高.txt</span></li>
+      </ul>
+    </div>
+    <div class="panelbox">
+      <h3>整理後（書類種別 × 工区）</h3>
+      <div id="after"><div class="empty">「FolderOSで整理する」を押すと、内容を読んで自動分類した結果が表示されます。</div></div>
+    </div>
+  </div>
+  <button class="btn" id="organizeBtn" style="max-width:280px;margin-top:12px">🗂️ FolderOSで整理する</button>
+  <p class="note" style="margin-top:8px">※ 合成データ。実運用では、御局の既存フォルダをそのまま読み取り、ファイルを移動せず仮想的に整理することも可能です（ローカル処理）。</p>
+</section>
+
+<section class="view" id="hub">
   <div class="kpis">
     <div class="kpi"><div class="n">5</div><div class="l">全工区</div></div>
     <div class="kpi done"><div class="n" id="kDone">3</div><div class="l">確認済</div></div>
@@ -203,18 +234,20 @@
 <!-- SEKISAN -->
 <section class="view" id="sekisan">
   <div class="panelbox" style="margin-bottom:12px">
-    <h3>積算 — 図面からの「拾い出し」と入力支援</h3>
-    <p style="font-size:.88rem;line-height:1.7">FolderOSが<b>配管図・数量計算書から数量を自動で拾い出し</b>、御局の既存「積算システム」へ渡す入力を支援します。手入力・転記の手間とミスを減らし、完成数量との突合までつなげます。<b>積算計算・金額の確定は御局の既存システムで実施</b>し、FolderOSは置き換えません（拾い出し・入力支援・突合を担当）。</p>
-    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px;font-size:.76rem">
-      <div style="flex:1;min-width:88px;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);text-align:center">図面・数量計算書</div>
-      <span style="color:var(--primary);font-weight:700">→</span>
-      <div style="flex:1;min-width:88px;border:1px solid var(--primary);border-radius:8px;padding:8px;background:#eef5fa;text-align:center"><b>FolderOS</b><br>数量拾い出し</div>
-      <span style="color:var(--primary);font-weight:700">→</span>
-      <div style="flex:1;min-width:88px;border:1px dashed #94a3b8;border-radius:8px;padding:8px;background:#fff;text-align:center">御局の積算システム<br>（既存・内製）</div>
-      <span style="color:var(--primary);font-weight:700">→</span>
-      <div style="flex:1;min-width:74px;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);text-align:center">積算金額</div>
-      <span style="color:var(--primary);font-weight:700">→</span>
-      <div style="flex:1;min-width:84px;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);text-align:center">完成数量と突合</div>
+    <h3>FolderOSが「積算システム」と「入力システム」のHUB</h3>
+    <p style="font-size:.88rem;line-height:1.7">FolderOSは、現場の<b>入力システム</b>と<b>積算システム</b>の間に立つHUBです。図面・数量計算書から数量を拾い出し、両システムをつないで突合します。<b>積算システムが将来新しくなっても</b>、FolderOSがHUBとして整理・連携・突合を担い続けます。</p>
+    <div style="display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;margin-top:12px;font-size:.76rem">
+      <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:120px">
+        <div style="border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);text-align:center">図面・数量計算書</div>
+        <div style="border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);text-align:center">入力システム（現場入力）</div>
+      </div>
+      <span style="align-self:center;color:var(--primary);font-weight:700">→</span>
+      <div style="flex:1.2;min-width:130px;border:2px solid var(--primary);border-radius:10px;padding:10px;background:#eef5fa;text-align:center;display:flex;flex-direction:column;justify-content:center"><b>FolderOS（HUB）</b><br><span style="font-size:.72rem">整理・拾い出し・突合</span></div>
+      <span style="align-self:center;color:var(--primary);font-weight:700">→</span>
+      <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:110px">
+        <div style="border:1px dashed #94a3b8;border-radius:8px;padding:8px;background:#fff;text-align:center">積算システム</div>
+        <div style="border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);text-align:center">完成数量と突合</div>
+      </div>
     </div>
   </div>
   <div class="panelbox">
@@ -228,7 +261,7 @@
       <tr><td>No.5</td><td class="l">弁・排泥工</td><td>仕切弁・排泥</td><td>一式</td><td>一式</td><td>✓</td></tr>
     </table>
     <p class="synth">※ 合成データ。FolderOSが拾い出し値と積算入力値を突合し、<b>No.4の転記ミス（5.6→5.0）を自動検出</b>。要確認だけを一覧化します。</p>
-    <button class="btn" style="max-width:300px" onclick="window.print()">🖨️ 御局の積算システムへ出力（CSV）／印刷</button>
+    <button class="btn" style="max-width:300px" onclick="window.print()">🖨️ 積算システムへ連携（CSV）／印刷</button>
   </div>
 </section>
 
@@ -247,18 +280,6 @@
     </table>
     <p style="font-size:.82rem;margin-top:12px">FolderOSが図面・数量計算書・完成数量表を横串で突合し、<b>No.2の数量不一致（-0.6m）を自動検出</b>。要確認箇所だけを一覧化します。</p>
     <button class="btn" style="max-width:220px" onclick="window.print()">🖨️ PDFで保存／印刷</button>
-  </div>
-</section>
-
-<!-- ABOUT -->
-<section class="view" id="about">
-  <div class="feat">
-    <div class="c"><b>① FolderOS（可視化）</b><p style="font-size:.84rem">散在ファイルを読み、1つのカテゴリに抽出・整理して見せる。ローカルで動作可能。</p></div>
-    <div class="c"><b>② 図面起点プレビュー</b><p style="font-size:.84rem">配管図を起点に、工区（フォルダ）ごとの進捗・突合を管理。</p></div>
-    <div class="c"><b>③ 現場投入アプリ</b><p style="font-size:.84rem">現場から②へ写真・出来高を投入（機能制限つき）。</p></div>
-  </div>
-  <div class="panelbox" style="margin-top:6px">
-    <p style="font-size:.86rem;line-height:1.7">本デモは画面イメージです。<b>本番は御局の閉域網内に同じ構成で導入</b>でき、機微情報を外部に出しません。実際の運用では、御局の実際の工事書類サンプルを用いて検証・具体化します。</p>
   </div>
 </section>
 
@@ -401,10 +422,29 @@ function openPreview(type,k,fname){
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 
+// ---- FolderOS 整理デモ ----
+(function(){
+  var ob=document.getElementById('organizeBtn');
+  if(!ob)return;
+  ob.addEventListener('click',function(){
+    document.getElementById('after').innerHTML =
+      '<div style="font-size:.84rem;line-height:1.5">'
+      +'<div style="margin-bottom:7px"><b>📐 配管図</b><div class="sub" style="margin-left:14px">配管図_確定版.pdf</div></div>'
+      +'<div style="margin-bottom:7px"><b>📊 数量計算書</b><div class="sub" style="margin-left:14px">数量計算書_最終2.xlsx</div></div>'
+      +'<div style="margin-bottom:7px"><b>📷 工事写真</b><div class="sub" style="margin-left:14px">IMG_20260903_1412.jpg ／ DSC_0099.JPG ／ No2写真まとめ.zip ／ スキャン0912.pdf</div></div>'
+      +'<div style="margin-bottom:7px"><b>📋 検査表</b><div class="sub" style="margin-left:14px">検査表(コピー).pdf ／ 部品リスト.xlsx</div></div>'
+      +'<div style="margin-bottom:7px"><b>🧮 積算</b><div class="sub" style="margin-left:14px">積算入力_new.csv</div></div>'
+      +'<div style="margin-bottom:7px"><b>🗒️ その他</b><div class="sub" style="margin-left:14px">メモ_出来高.txt</div></div>'
+      +'<div style="margin-top:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px">✓ 10件のファイルを内容から判別し、6カテゴリに自動整理しました。</div></div>';
+    ob.textContent='✓ 整理しました';
+  });
+})();
+
 render("k2");
 (function(){var m=location.search.match(/tab=(\w+)/);if(m){var t=document.querySelector('.tab[data-v="'+m[1]+'"]');if(t)t.click();}})();
 if(location.search.indexOf('p=detail')>=0)openPreview('detail','k2');
 if(location.search.indexOf('p=draw')>=0)openPreview('drawing');
+if(location.search.indexOf('organized')>=0){var ob2=document.getElementById('organizeBtn');if(ob2)ob2.click();}
 </script>
 </body>
 </html>
