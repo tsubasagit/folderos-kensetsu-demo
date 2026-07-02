@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FolderOS 建設Form デモ — 図面起点ファイルビュー</title>
+<title>FolderOS 建設Form デモ — 路線別 数量確定表</title>
 <meta name="robots" content="index,follow">
 <style>
   :root{--primary:#1f5b8c;--primary-d:#16446b;--accent:#538bb0;--ink:#1e293b;--sub:#64748b;--line:#e2e8f0;--bg:#f8fafc;
-        --done:#22c55e;--work:#f59e0b;--todo:#cbd5e1;--warn:#ef4444}
+        --done:#22c55e;--work:#f59e0b;--todo:#cbd5e1;--warn:#ef4444;--fix:#0ea5e9}
   *{box-sizing:border-box}
   body{margin:0;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",sans-serif;color:var(--ink);background:var(--bg)}
   header{background:var(--primary);color:#fff;padding:12px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
@@ -16,18 +16,18 @@
   header .demo{font-size:.72rem;background:#b45309;padding:4px 10px;border-radius:999px;font-weight:700}
   header .local{margin-left:auto;font-size:.74rem;background:#0f3a52;padding:5px 11px;border-radius:999px;font-weight:700}
   .ribbon{background:#fff7ed;border-bottom:1px solid #fed7aa;color:#9a3412;font-size:.78rem;padding:6px 18px;text-align:center}
-  .work{padding:8px 18px;background:#fff;border-bottom:1px solid var(--line);font-size:.82rem;color:var(--sub);display:flex;gap:16px;flex-wrap:wrap}
+  .work{padding:8px 18px;background:#fff;border-bottom:1px solid var(--line);font-size:.82rem;color:var(--sub);display:flex;gap:14px;flex-wrap:wrap;align-items:center}
   .work b{color:var(--ink)}
+  .work select{font-family:inherit;font-size:.82rem;border:1px solid var(--primary);border-radius:7px;padding:4px 8px;color:var(--primary);font-weight:700;background:#fff;cursor:pointer}
   .tabs{display:flex;gap:6px;padding:10px 18px 0;background:#fff;border-bottom:1px solid var(--line);flex-wrap:wrap}
   .tab{padding:8px 14px;border:1px solid var(--line);border-bottom:none;border-radius:9px 9px 0 0;cursor:pointer;font-size:.86rem;font-weight:600;color:var(--sub);background:var(--bg)}
   .tab.active{color:var(--primary);background:#fff;border-color:var(--primary);box-shadow:inset 0 -2px 0 var(--primary)}
   .view{display:none;padding:16px 18px;max-width:1080px;margin:0 auto}
   .view.active{display:block}
-  /* hub */
   .kpis{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
   .kpi{flex:1;min-width:96px;border:1px solid var(--line);border-radius:10px;padding:8px;text-align:center;background:#fff}
   .kpi .n{font-size:1.4rem;font-weight:700;line-height:1}.kpi .l{font-size:.68rem;color:var(--sub);margin-top:3px}
-  .kpi.done .n{color:var(--done)}.kpi.todo .n{color:#94a3b8}.kpi.warn .n{color:var(--warn)}
+  .kpi.done .n{color:var(--done)}.kpi.todo .n{color:#94a3b8}.kpi.warn .n{color:var(--warn)}.kpi.fix .n{color:var(--fix)}
   .hub{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}
   @media(max-width:820px){.hub{grid-template-columns:1fr}}
   .panelbox{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px}
@@ -37,19 +37,19 @@
   .seg:hover{filter:drop-shadow(0 0 6px rgba(31,91,140,.6))}
   .seg.sel{stroke-width:16;filter:drop-shadow(0 0 8px rgba(15,58,82,.85))}
   .node{fill:#fff;stroke:#475569;stroke-width:2;cursor:pointer}
-  .lbl{font-size:13px;font-weight:700;fill:#334155;pointer-events:none}
+  .lbl{font-size:12px;font-weight:700;fill:#334155;pointer-events:none}
   .legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:.72rem}
   .legend i{width:11px;height:11px;border-radius:3px;display:inline-block;margin-right:4px;vertical-align:-1px}
   .empty{color:var(--sub);font-size:.86rem;border:1px dashed var(--line);border-radius:10px;padding:26px 14px;text-align:center}
   .badge{display:inline-block;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:999px;color:#fff}
-  .b-done{background:var(--done)}.b-todo{background:#94a3b8}.b-warn{background:var(--warn)}
+  .b-done{background:var(--done)}.b-todo{background:#94a3b8}.b-warn{background:var(--warn)}.b-fix{background:var(--fix)}
   .meta{font-size:.82rem;color:var(--sub);margin:8px 0 0}.meta b{color:var(--ink)}
   .match{margin-top:10px;font-size:.84rem;border-radius:8px;padding:8px 10px}
   .match.ok{background:#f0fdf4;border:1px solid #bbf7d0}.match.ng{background:#fef2f2;border:1px solid #fecaca}
+  .match.na{background:var(--bg);border:1px solid var(--line);color:var(--sub)}
   .files{list-style:none;margin:6px 0 0;padding:0}
   .files li{display:flex;gap:9px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-top:6px;font-size:.84rem}
   .files li.lock{opacity:.5}.files li .sz{margin-left:auto;font-size:.7rem;color:var(--sub)}
-  /* phone */
   .phonewrap{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start}
   @media(max-width:720px){.phonewrap{grid-template-columns:1fr}}
   .phone{background:#1e293b;border-radius:26px;padding:12px;width:260px;margin:0 auto}
@@ -62,44 +62,54 @@
   .phone .thumbs div{width:40px;height:40px;border:1px solid var(--line);border-radius:7px;background:var(--bg);display:flex;align-items:center;justify-content:center}
   .btn{background:var(--primary);color:#fff;border:none;border-radius:9px;padding:10px;width:100%;margin-top:12px;font-weight:700;cursor:pointer;font-size:.9rem}
   .btn:hover{background:var(--primary-d)}
+  .btn.sm{width:auto;margin:0;padding:6px 12px;font-size:.8rem}
+  .btn.ghost{background:#fff;color:var(--primary);border:1px solid var(--primary)}
+  .btn.ghost:hover{background:var(--primary);color:#fff}
+  .btn:disabled{background:#cbd5e1;cursor:default}
   .toast{margin-top:10px;font-size:.8rem;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px;display:none}
   .note{font-size:.78rem;color:var(--sub);margin-top:6px}
-  .feat{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:6px}
-  @media(max-width:720px){.feat{grid-template-columns:1fr}}
-  .feat .c{border:1px solid var(--line);border-radius:10px;padding:11px 13px;background:#fff}
-  .feat .c b{color:var(--primary)}
-  /* doc */
-  .doc{background:#fff;border:1px solid var(--line);border-radius:10px;padding:20px;max-width:760px;margin:0 auto}
-  .doc h2{text-align:center;font-size:1.05rem;letter-spacing:.3em;margin:0 0 14px}
+  /* 数量確定 */
   table{width:100%;border-collapse:collapse;font-size:.82rem}
   th,td{border:1px solid #cbd5e1;padding:7px 9px;text-align:center}
   th{background:var(--bg)}
-  td.l{text-align:left}.warnrow{background:#fef2f2}
+  td.l{text-align:left}
+  .warnrow{background:#fef2f2}
+  .rhead td{background:#eef5fa;font-weight:700;text-align:left;font-size:.85rem}
+  .rhead .st{float:right;font-weight:700}
+  .diff-pos{color:#b45309;font-weight:700}.diff-zero{color:var(--sub)}.diff-na{color:#94a3b8}
+  .fixval{font-weight:700;color:var(--primary)}
+  .confirmed td{background:#f0fdf4}
+  /* 印刷帳票 */
+  .doc{background:#fff;border:1px solid var(--line);border-radius:10px;padding:24px;max-width:820px;margin:0 auto}
+  .doc h2{text-align:center;font-size:1.15rem;letter-spacing:.35em;margin:0 0 16px}
+  .doc .dhead{width:100%;border-collapse:collapse;font-size:.8rem;margin-bottom:14px}
+  .doc .dhead td{border:1px solid #94a3b8;padding:5px 8px;text-align:left}
+  .doc .dhead .k{background:var(--bg);font-weight:700;width:14%;white-space:nowrap}
+  .route-block{margin-bottom:16px}
+  .route-block .rb-title{font-weight:700;font-size:.9rem;border-left:4px solid var(--primary);padding-left:8px;margin:0 0 6px}
+  .route-block .rb-sub{text-align:right;font-size:.82rem;margin:4px 0 0}
+  .totalrow td{background:#eef5fa;font-weight:700}
+  .signblk{display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid #94a3b8;margin-top:16px;font-size:.78rem}
+  .signblk div{border:.5px solid #94a3b8;padding:14px 8px 22px;text-align:center}
+  .signblk .lb{font-size:.72rem;color:var(--sub)}
   footer{padding:14px 18px;font-size:.74rem;color:var(--sub);text-align:center;border-top:1px solid var(--line);background:#fff}
+  .newbadge{display:inline-block;background:#ea580c;color:#fff;font-size:.66rem;font-weight:700;padding:2px 9px;border-radius:999px;margin-left:8px;vertical-align:middle}
   .linkbtn{margin-left:8px;font-size:.74rem;border:1px solid var(--primary);color:var(--primary);background:#fff;border-radius:7px;padding:3px 9px;cursor:pointer;font-weight:700}
   .linkbtn:hover{background:var(--primary);color:#fff}
-  .files li{cursor:pointer}.files li.lock{cursor:default}
-  .files li:not(.lock):hover{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary) inset}
-  .modal{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:flex-start;justify-content:center;padding:22px 12px;z-index:50;overflow:auto}
-  .modal.open{display:flex}
-  .sheet{background:#fff;border-radius:10px;max-width:680px;width:100%;margin:auto;box-shadow:0 14px 44px rgba(0,0,0,.35)}
-  .sheet .shead{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line)}
-  .sheet .shead .fn{font-weight:700;font-size:.9rem}
-  .sheet .shead .pv{font-size:.66rem;background:#b45309;color:#fff;padding:2px 8px;border-radius:999px}
-  .sheet .shead .x{margin-left:auto;cursor:pointer;font-size:1.3rem;color:var(--sub);border:none;background:none;line-height:1}
-  .sheet .sbody{padding:16px}
-  .dwsheet{border:2px solid #334155;border-radius:4px;padding:12px}
-  .titleblk{display:grid;grid-template-columns:1fr 1fr;border:1px solid #334155;margin-top:10px;font-size:.72rem}
-  .titleblk div{border:.5px solid #94a3b8;padding:5px 7px}
-  .titleblk b{color:var(--ink)}
-  .photgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  .photgrid .pt{border:1px solid var(--line);border-radius:7px;background:var(--bg);aspect-ratio:4/3;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.68rem;color:var(--sub);text-align:center}
-  .photgrid .pt span{font-size:1.5rem}
-  .synth{font-size:.72rem;color:var(--sub);margin-top:8px}
-  .ksg{cursor:pointer;transition:stroke-width .12s}
-  .ksg:hover{stroke-width:13}
-  .ksg.sel{stroke:#1f5b8c;stroke-width:14}
-  .newbadge{display:inline-block;background:#ea580c;color:#fff;font-size:.66rem;font-weight:700;padding:2px 9px;border-radius:999px;margin-left:8px;vertical-align:middle}
+  /* 印刷時: 帳票だけを残す */
+  @media print{
+    header,.ribbon,.work,.tabs,.newbadge,.btn,.linkbtn,footer,#organize,#hub,#phone,#confirm,.pnav{display:none !important}
+    .view{display:none !important;padding:0;max-width:none}
+    #doc.view{display:block !important}
+    .doc{border:none;border-radius:0;box-shadow:none;padding:0;max-width:none;margin:0}
+    body{background:#fff}
+    @page{size:A4 portrait;margin:14mm}
+    table{font-size:10pt}
+    th,td{border:1px solid #000}
+    .doc h2{letter-spacing:.3em}
+    .route-block{break-inside:avoid}
+    .rhead td,.rb-title,.totalrow td,.doc .dhead .k{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
 </style>
 </head>
 <body>
@@ -112,53 +122,52 @@
 <div class="ribbon">これは <b>合成データ</b> による画面イメージのデモです（実在の事業者・図面・数値ではありません）。FolderOSが扱うのは取り込まれた社内の内部データで、機微な情報を外部に出しません（スマホ入力等はインターネットを利用）。</div>
 
 <div class="work">
-  <span>工事名：<b>配水小管布設替工事（みどり台一丁目地区）</b></span>
-  <span>工事番号：<b>第9001234号（架空）</b></span>
-  <span>受注者：<b>株式会社サンプル建設</b></span>
-  <span>工期：<b>2026.7.1〜11.30</b></span>
+  <span>単価契約工事</span>
+  <span>工事番号：<select id="koujiSel"></select></span>
+  <span id="workName"></span>
+  <span id="workContractor"></span>
+  <span id="workPeriod"></span>
 </div>
 
 <div style="padding:9px 18px;background:#0f3a52;color:#fff;font-size:.82rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-  <b>本プロジェクトでAppTalentHubが新規開発：</b>
-  <span style="background:#ea580c;border-radius:6px;padding:2px 9px;font-weight:700">図面ハブ</span><span style="opacity:.6">＋</span>
-  <span style="background:#ea580c;border-radius:6px;padding:2px 9px;font-weight:700">① スマホ現場入力</span><span style="opacity:.6">→</span>
-  <span style="background:#ea580c;border-radius:6px;padding:2px 9px;font-weight:700">② 積算入力</span><span style="opacity:.6">→</span>
-  <span style="background:#ea580c;border-radius:6px;padding:2px 9px;font-weight:700">③ 帳票出力</span>
-  <span style="opacity:.85;margin-left:6px">／ 既存の <b>FolderOS</b> が散在ファイルを整理</span>
+  <b>ゴール：</b>
+  <span>工事番号</span><span style="opacity:.6">→</span>
+  <span style="background:#ea580c;border-radius:6px;padding:2px 9px;font-weight:700">路線番号ごとの数量を確定</span><span style="opacity:.6">→</span>
+  <span style="background:#ea580c;border-radius:6px;padding:2px 9px;font-weight:700">積算の手前の「数量確定表」を印刷</span>
+  <span style="opacity:.85;margin-left:6px">／ 週報⇔完成の食い違いだけを人が判断</span>
 </div>
 <div class="tabs">
-  <div class="tab active" data-v="organize">🗂️ FolderOS：整理（既存）</div>
-  <div class="tab" data-v="hub">🗺️ 図面ハブ 🆕</div>
-  <div class="tab" data-v="phone">📱 現場入力 🆕</div>
-  <div class="tab" data-v="sekisan">🧮 積算入力 🆕</div>
-  <div class="tab" data-v="doc">📄 帳票出力 🆕</div>
+  <div class="tab" data-v="organize">🗂️ FolderOS：整理</div>
+  <div class="tab" data-v="hub">🗺️ 図面ハブ（路線）</div>
+  <div class="tab" data-v="phone">📱 現場入力</div>
+  <div class="tab active" data-v="confirm">🧮 数量確定（突合）🆕</div>
+  <div class="tab" data-v="doc">📄 数量確定表（印刷）🆕</div>
 </div>
 
-<!-- HUB -->
 <!-- ORGANIZE -->
-<section class="view active" id="organize">
+<section class="view" id="organize">
   <div class="panelbox" style="margin-bottom:12px">
     <h3>FolderOS：散らかったファイルを「整理」 <span class="newbadge" style="background:#64748b">既存：FolderOS</span></h3>
-    <p style="font-size:.88rem;line-height:1.7">FolderOSの基本は、<b>既存の散在ファイルを内容ごとに読み取り、書類種別・工区へ自動で分類・整理</b>することです（ローカルで動作）。下の「整理する」を押すと、バラバラのファイルが整います。</p>
+    <p style="font-size:.88rem;line-height:1.7">FolderOSの基本は、<b>既存の散在ファイルを内容ごとに読み取り、書類種別・路線番号へ自動で分類・整理</b>することです（ローカルで動作）。設計コンサルの様式がバラバラでも、<b>様式に依存せず中身を読んで</b>束ねます。下の「整理する」を押すと、バラバラのファイルが整います。</p>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
     <div class="panelbox">
       <h3>整理前（散在）</h3>
       <ul class="files" style="cursor:default">
         <li style="cursor:default"><span>🖼️</span><span class="nm">IMG_20260903_1412.jpg</span></li>
-        <li style="cursor:default"><span>📄</span><span class="nm">スキャン0912.pdf</span></li>
+        <li style="cursor:default"><span>📄</span><span class="nm">週報_0905.pdf</span></li>
         <li style="cursor:default"><span>📊</span><span class="nm">数量計算書_最終2.xlsx</span></li>
-        <li style="cursor:default"><span>📄</span><span class="nm">検査表(コピー).pdf</span></li>
-        <li style="cursor:default"><span>🗂️</span><span class="nm">No2写真まとめ.zip</span></li>
+        <li style="cursor:default"><span>📄</span><span class="nm">完成数量表(コピー).pdf</span></li>
+        <li style="cursor:default"><span>🗂️</span><span class="nm">路線2写真まとめ.zip</span></li>
         <li style="cursor:default"><span>📈</span><span class="nm">積算入力_new.csv</span></li>
         <li style="cursor:default"><span>📐</span><span class="nm">配管図_確定版.pdf</span></li>
-        <li style="cursor:default"><span>📊</span><span class="nm">部品リスト.xlsx</span></li>
+        <li style="cursor:default"><span>📊</span><span class="nm">部品検査表.xlsx</span></li>
         <li style="cursor:default"><span>🖼️</span><span class="nm">DSC_0099.JPG</span></li>
         <li style="cursor:default"><span>📝</span><span class="nm">メモ_出来高.txt</span></li>
       </ul>
     </div>
     <div class="panelbox">
-      <h3>整理後（書類種別 × 工区）</h3>
+      <h3>整理後（書類種別 × 路線番号）</h3>
       <div id="after"><div class="empty">「FolderOSで整理する」を押すと、内容を読んで自動分類した結果が表示されます。</div></div>
     </div>
   </div>
@@ -166,77 +175,53 @@
   <p class="note" style="margin-top:8px">※ 合成データ。実運用では、御局の既存フォルダをそのまま読み取り、ファイルを移動せず仮想的に整理することも可能です（ローカル処理）。</p>
 </section>
 
+<!-- HUB -->
 <section class="view" id="hub">
-  <h3 style="margin:0 0 10px">🗺️ 図面ハブ <span class="newbadge">🆕 AppTalentHubが新規開発</span></h3>
-  <div class="kpis">
-    <div class="kpi"><div class="n">5</div><div class="l">全工区</div></div>
-    <div class="kpi done"><div class="n" id="kDone">3</div><div class="l">確認済</div></div>
-    <div class="kpi warn"><div class="n" id="kWarn">1</div><div class="l">⚠要確認</div></div>
-    <div class="kpi todo"><div class="n" id="kTodo">1</div><div class="l">未着手</div></div>
-  </div>
+  <h3 style="margin:0 0 10px">🗺️ 図面ハブ（路線番号） <span class="newbadge">🆕 AppTalentHubが新規開発</span></h3>
+  <div class="kpis" id="hubKpis"></div>
   <div class="hub">
     <div class="panelbox stage">
-      <h3>配管図（完成図）<span style="font-weight:400;color:var(--sub);font-size:.78rem">— 工区をクリック</span><button class="linkbtn" onclick="openPreview('drawing')">📄 図面を開く</button></h3>
-      <svg class="dwg" viewBox="0 0 400 420" id="svg">
-        <line class="seg" data-k="k1" x1="200" y1="30"  x2="200" y2="140" stroke="#22c55e" stroke-width="11"/>
-        <line class="seg" data-k="k2" x1="200" y1="140" x2="150" y2="235" stroke="#ef4444" stroke-width="11"/>
-        <line class="seg" data-k="k3" x1="150" y1="235" x2="205" y2="320" stroke="#22c55e" stroke-width="11"/>
-        <line class="seg" data-k="k4" x1="205" y1="320" x2="255" y2="395" stroke="#cbd5e1" stroke-width="11"/>
-        <line class="seg" data-k="k5" x1="205" y1="320" x2="115" y2="385" stroke="#22c55e" stroke-width="11"/>
-        <circle class="node" data-k="k1" cx="200" cy="140" r="9"/>
-        <circle class="node" data-k="k3" cx="205" cy="320" r="9"/>
-        <rect class="node" data-k="k5" x="107" y="377" width="16" height="16" rx="2"/>
-        <text class="lbl" x="210" y="90">No.1</text>
-        <text class="lbl" x="120" y="195">No.2</text>
-        <text class="lbl" x="170" y="285">No.3</text>
-        <text class="lbl" x="262" y="372">No.4</text>
-        <text class="lbl" x="64" y="360">No.5</text>
-      </svg>
+      <h3>配管図（完成図）<span style="font-weight:400;color:var(--sub);font-size:.78rem">— 路線をクリック</span></h3>
+      <svg class="dwg" viewBox="0 0 400 420" id="svg"></svg>
       <div class="legend">
-        <span><i style="background:var(--done)"></i>確認済</span>
-        <span><i style="background:var(--work)"></i>施工済・未確認</span>
-        <span><i style="background:var(--todo)"></i>未着手</span>
-        <span><i style="background:var(--warn)"></i>要確認</span>
+        <span><i style="background:var(--done)"></i>数量一致</span>
+        <span><i style="background:var(--warn)"></i>要確認（食い違い）</span>
+        <span><i style="background:var(--todo)"></i>完成書類 未提出</span>
+        <span><i style="background:var(--fix)"></i>確定済</span>
       </div>
     </div>
     <div class="panelbox detail">
-      <h3>工区の詳細</h3>
-      <div id="panel"><div class="empty">← 図面の工区（No.1〜No.5）をクリック</div></div>
+      <h3>路線の詳細</h3>
+      <div id="panel"><div class="empty">← 図面の路線をクリック</div></div>
     </div>
   </div>
 </section>
 
 <!-- PHONE -->
 <section class="view" id="phone">
-  <h3 style="margin:0 0 10px">① スマホ現場入力 <span class="newbadge">🆕 AppTalentHubが新規開発</span></h3>
+  <h3 style="margin:0 0 10px">📱 現場入力（週報の投入） <span class="newbadge">🆕 AppTalentHubが新規開発</span></h3>
   <div class="phonewrap">
     <div class="phone">
       <div class="scr">
-        <div class="bar">📷 出来高・写真 投入</div>
+        <div class="bar">📷 週報・出来高 投入</div>
         <div class="body">
-          <label>工区</label>
-          <select id="pk">
-            <option value="k1">No.1工区</option>
-            <option value="k2" selected>No.2工区</option>
-            <option value="k3">No.3工区</option>
-            <option value="k4">No.4工区</option>
-            <option value="k5">No.5工区</option>
-          </select>
-          <label>出来高数量（m）</label>
+          <label>路線番号</label>
+          <select id="pk"></select>
+          <label>今週の出来高数量（m）</label>
           <input id="pq" value="11.4" inputmode="decimal">
           <label>写真・検査表</label>
           <div class="thumbs"><div>📷</div><div>📷</div><div>📋</div><div>＋</div></div>
-          <button class="btn" id="psend">投入する</button>
+          <button class="btn" id="psend">週報として投入する</button>
           <div class="toast" id="ptoast"></div>
-          <div class="note">📶 インターネット経由で投入。データは工区に紐づき、図面ハブに即反映。</div>
+          <div class="note">📶 現場からスマホで投入。データは路線番号に紐づき、図面ハブ・数量確定に即反映。</div>
         </div>
       </div>
     </div>
     <div class="panelbox">
-      <h3>現場から「入力」まで一気通貫</h3>
-      <p style="font-size:.86rem;line-height:1.7">紙で上がっていた工事写真・検査表・出来高を、<b>現場（受注者）がスマホから投入</b>。データは工区に自動でひも付き、<b>左の図面ハブに即反映</b>されます（このデモでは投入すると該当工区が「施工済」に変わります）。</p>
+      <h3>週報を「毎週」ためておく → 完成時は差分確認だけ</h3>
+      <p style="font-size:.86rem;line-height:1.7">現状は、毎週の<b>週報</b>と工事完成後の<b>完成書類</b>で<b>同じ内容を二度提出</b>し、確認は完成後にまとめて発生していました。週報を毎週ためておけば、完成時の確認は<b>「週報の積み上げ ⇔ 完成書類」の差分だけ</b>になります。</p>
       <ul style="font-size:.84rem;line-height:1.8;padding-left:18px;margin:6px 0 0">
-        <li>担当工区のみ投入可（<b>機能制限</b>）</li>
+        <li>担当路線のみ投入可（<b>機能制限</b>）</li>
         <li>確認済データは編集不可</li>
         <li>発注者・受注者で<b>相互検証</b></li>
       </ul>
@@ -245,260 +230,343 @@
   </div>
 </section>
 
-<!-- SEKISAN -->
-<section class="view" id="sekisan">
-  <h3 style="margin:0 0 10px">② 積算入力 <span class="newbadge">🆕 AppTalentHubが新規開発</span></h3>
-  <div class="panelbox" style="margin-bottom:12px">
-    <h3>FolderOSが「積算システム」と「入力システム」のHUB</h3>
-    <p style="font-size:.88rem;line-height:1.7">FolderOSは、現場の<b>入力システム</b>と<b>積算システム</b>の間に立つHUBです。図面・数量計算書から数量を拾い出し、両システムをつないで突合します。<b>積算システムが将来新しくなっても</b>、FolderOSがHUBとして整理・連携・突合を担い続けます。</p>
-    <div style="display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;margin-top:12px;font-size:.76rem">
-      <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:120px">
-        <div style="border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);text-align:center">図面・数量計算書</div>
-        <div style="border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);text-align:center">入力システム（現場入力）</div>
-      </div>
-      <span style="align-self:center;color:var(--primary);font-weight:700">→</span>
-      <div style="flex:1.2;min-width:130px;border:2px solid var(--primary);border-radius:10px;padding:10px;background:#eef5fa;text-align:center;display:flex;flex-direction:column;justify-content:center"><b>FolderOS（HUB）</b><br><span style="font-size:.72rem">整理・拾い出し・突合</span></div>
-      <span style="align-self:center;color:var(--primary);font-weight:700">→</span>
-      <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:110px">
-        <div style="border:1px dashed #94a3b8;border-radius:8px;padding:8px;background:#fff;text-align:center">積算システム</div>
-        <div style="border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);text-align:center">完成数量と突合</div>
-      </div>
-    </div>
+<!-- CONFIRM (数量確定) -->
+<section class="view active" id="confirm">
+  <h3 style="margin:0 0 6px">🧮 数量確定（週報 ⇔ 完成書類 の突合） <span class="newbadge">🆕 AppTalentHubが新規開発</span></h3>
+  <p style="font-size:.84rem;color:var(--sub);margin:0 0 10px">工事番号に紐づく全路線の積算票を、<b>週報の累積</b>と<b>完成書類</b>で自動照合。差し引きはFolderOSが計算し、<b>食い違い（要確認）だけ</b>を赤で示します。人は妥当性を見て「確定」するだけ。</p>
+  <div class="kpis" id="confirmKpis"></div>
+  <div class="panelbox" style="margin-bottom:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+    <button class="btn sm" id="confirmAll">✔ 全路線を確定する</button>
+    <button class="btn sm ghost" id="resetConfirm">↺ 確定をリセット</button>
+    <span class="note" style="margin:0">確定すると「数量確定表（印刷）」に確定値が反映されます。</span>
   </div>
   <div class="panelbox">
-    <h3>新しい積算システム（図面ハブ連動）</h3>
-    <p style="font-size:.84rem;line-height:1.6">将来このHUBの先に新しい積算システムを置けます。<b>図面ハブで工区を選ぶと、その工区の積算明細がここに連動表示</b>されます。FolderOSが図面・数量から科目と数量を積み上げ、積算システムへ渡します。</p>
-    <div style="display:grid;grid-template-columns:.78fr 1.22fr;gap:14px;margin-top:10px">
-      <div>
-        <div style="font-size:.74rem;color:var(--sub);margin-bottom:4px">図面ハブ（工区をクリック）</div>
-        <svg viewBox="0 0 260 300" style="width:100%;height:auto;background:#fcfcfd;border:1px solid var(--line);border-radius:8px">
-          <line class="ksg sel" data-sk="k1" x1="130" y1="22" x2="130" y2="100" stroke="#538bb0" stroke-width="9" stroke-linecap="round"/>
-          <line class="ksg" data-sk="k2" x1="130" y1="100" x2="92" y2="168" stroke="#538bb0" stroke-width="9" stroke-linecap="round"/>
-          <line class="ksg" data-sk="k3" x1="92" y1="168" x2="135" y2="228" stroke="#538bb0" stroke-width="9" stroke-linecap="round"/>
-          <line class="ksg" data-sk="k4" x1="135" y1="228" x2="175" y2="282" stroke="#538bb0" stroke-width="9" stroke-linecap="round"/>
-          <line class="ksg" data-sk="k5" x1="135" y1="228" x2="62" y2="280" stroke="#538bb0" stroke-width="9" stroke-linecap="round"/>
-          <text x="138" y="66" font-size="11" font-weight="700" fill="#334155">No.1</text>
-          <text x="62" y="140" font-size="11" font-weight="700" fill="#334155">No.2</text>
-          <text x="108" y="205" font-size="11" font-weight="700" fill="#334155">No.3</text>
-          <text x="180" y="270" font-size="11" font-weight="700" fill="#334155">No.4</text>
-          <text x="28" y="262" font-size="11" font-weight="700" fill="#334155">No.5</text>
-        </svg>
-        <div style="margin-top:8px;background:#0f3a52;color:#fff;border-radius:8px;padding:8px 10px;text-align:center;font-size:.8rem">工事 積算合計<br><b style="font-size:1.05rem">¥1,597,300</b></div>
-      </div>
-      <div>
-        <div id="sekHead" style="font-weight:700;font-size:.9rem;margin-bottom:6px">No.1工区 の積算明細</div>
-        <table id="sekTable"></table>
-        <div id="sekSub" style="text-align:right;margin-top:6px;font-size:.9rem">小計：<b>¥993,000</b></div>
-        <button class="btn" style="max-width:280px;margin-top:10px" onclick="switchTab('doc')">→ ③ 帳票を出力する</button>
-      </div>
-    </div>
-    <p class="synth" style="margin-top:8px">※ 合成データ。図面ハブの工区と積算が連動。FolderOSが拾い出した数量を積算システムへ渡し、転記ミスを防ぎます。</p>
+    <table id="confirmTable"></table>
+    <p class="note" style="margin-top:8px">※ 合成データ。差分・件数はすべて計算結果（捏造なし）。既定の確定値は完成書類側の数量です。</p>
   </div>
 </section>
 
-<!-- DOC -->
+<!-- DOC (印刷) -->
 <section class="view" id="doc">
-  <h3 style="margin:0 0 6px">③ 帳票出力 <span class="newbadge">🆕 AppTalentHubが新規開発</span></h3>
-  <p style="font-size:.84rem;color:var(--sub);margin:0 0 10px">②積算入力をもとに、完成数量表などの帳票を自動生成します。</p>
-  <div class="doc">
-    <h2>完 成 数 量 表</h2>
-    <p style="font-size:.8rem;color:var(--sub);text-align:right;margin:0 0 8px">工事番号 第9001234号 ／ 株式会社サンプル建設 ／ ※合成データ</p>
-    <table>
-      <tr><th>工区</th><th>管種・口径</th><th>区分</th><th>積算数量</th><th>完成数量</th><th>判定</th></tr>
-      <tr><td>No.1</td><td>φ150 FCD(GX)</td><td>新設</td><td>45.0 m</td><td>45.0 m</td><td>✓一致</td></tr>
-      <tr class="warnrow"><td>No.2</td><td>φ150 FCD(T)</td><td>撤去</td><td>12.0 m</td><td>11.4 m</td><td>⚠不一致</td></tr>
-      <tr><td>No.3</td><td>φ150 FCD(CL)</td><td>新設</td><td>8.5 m</td><td>8.5 m</td><td>✓一致</td></tr>
-      <tr><td>No.4</td><td>φ75 HPPE</td><td>新設</td><td>5.6 m</td><td>—</td><td>未施工</td></tr>
-      <tr><td>No.5</td><td>弁・排泥工</td><td>新設</td><td>一式</td><td>一式</td><td>✓一致</td></tr>
-    </table>
-    <p style="font-size:.82rem;margin-top:12px">FolderOSが図面・数量計算書・完成数量表を横串で突合し、<b>No.2の数量不一致（-0.6m）を自動検出</b>。要確認箇所だけを一覧化します。</p>
-    <button class="btn" style="max-width:220px" onclick="window.print()">🖨️ PDFで保存／印刷</button>
+  <div class="pnav" style="max-width:820px;margin:0 auto 10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <h3 style="margin:0">📄 路線別 数量確定表 <span class="newbadge">🆕 印刷して積算へ</span></h3>
+    <button class="btn sm" style="margin-left:auto" onclick="window.print()">🖨️ 印刷／PDF保存</button>
   </div>
+  <div class="doc" id="docSheet"></div>
 </section>
 
 <footer>
   FolderOS 建設Form デモ｜株式会社AppTalentHub　|　データはすべて合成（架空）。実在の事業者・図面・数値ではありません。FolderOSが扱うのは取り込み済みの社内データで、機微な内部データを外部に出しません（スマホ入力等はインターネットを利用）。
 </footer>
 
-<div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
-  <div class="sheet">
-    <div class="shead"><span class="fn" id="mfn"></span><span class="pv">PDFプレビュー（イメージ）</span><button class="x" onclick="closeModal()">×</button></div>
-    <div class="sbody" id="mbody"></div>
-  </div>
-</div>
-
 <script>
-const DATA={
- k1:{name:"No.1工区",pipe:"φ150 FCD（GX継手）",kind:"新設",status:"done",est:"45.0 m",done:"45.0 m",sdate:"7/3",cdate:"7/5",
-     files:[["📐","配管詳細図②_No1.pdf","1.2MB",1],["📷","工事写真帳_No1（12枚）","8.4MB",1],["📋","部品検査表_No1.pdf","0.6MB",1],["🧮","積算明細_No1.csv","12KB",1]]},
- k2:{name:"No.2工区",pipe:"φ150 FCD（T継手）",kind:"撤去",status:"warn",est:"12.0 m",done:"11.4 m",sdate:"7/9",cdate:"—",
-     files:[["📐","配管詳細図②_No2.pdf","1.1MB",1],["📷","工事写真帳_No2（9枚）","6.1MB",1],["📋","部品検査表_No2.pdf","0.5MB",1],["🧮","積算明細_No2.csv","11KB",1]]},
- k3:{name:"No.3工区",pipe:"φ150 FCD（CL継手）",kind:"新設",status:"done",est:"8.5 m",done:"8.5 m",sdate:"7/9",cdate:"7/11",
-     files:[["📐","配管詳細図②_No3.pdf","0.9MB",1],["📷","工事写真帳_No3（7枚）","5.0MB",1],["📋","部品検査表_No3.pdf","0.5MB",1],["🧮","積算明細_No3.csv","9KB",1]]},
- k4:{name:"No.4工区",pipe:"φ75 HPPE",kind:"新設",status:"todo",est:"5.6 m",done:"—",sdate:"—",cdate:"—",
-     files:[["📐","配管詳細図②_No4.pdf","0.8MB",1],["📷","工事写真帳_No4（未提出）","—",0],["📋","部品検査表_No4（未提出）","—",0],["🧮","積算明細_No4.csv","8KB",1]]},
- k5:{name:"No.5工区（弁・排泥工）",pipe:"仕切弁・排泥設備",kind:"新設",status:"done",est:"一式",done:"一式",sdate:"7/9",cdate:"7/12",
-     files:[["📐","設備詳細図②_No5.pdf","0.7MB",1],["📷","工事写真帳_No5（10枚）","7.2MB",1],["📋","部品検査表_No5.pdf","0.6MB",1],["🧮","積算明細_No5.csv","10KB",1]]}
+/* ============================================================
+   データモデル: 単価契約 → 工事番号 → 路線番号 → 積算票(科目×数量)
+   weekly = 週報の累積数量 / final = 完成書類の数量（null=完成書類未提出）
+   差分・確定値・件数はすべてJSで算出（ハードコードしない）
+   ============================================================ */
+const KOUJI = {
+  "9001234":{
+    no:"第9001234号（架空）", name:"配水小管布設替工事（みどり台一丁目地区）",
+    contractor:"株式会社サンプル建設", period:"2026.7.1〜11.30",
+    routes:[
+      {id:"1", label:"路線1（みどり台1-1〜1-8）", pipe:"φ150 FCD(GX)", kind:"新設",
+        items:[
+          {name:"配水管布設", spec:"φ150 FCD(GX)", unit:"m",  weekly:44.4, final:45.0},
+          {name:"継手",       spec:"φ150 GX",      unit:"箇所", weekly:6,    final:6},
+          {name:"土工・舗装復旧", spec:"アスファルト", unit:"m", weekly:44.4, final:45.0}
+        ]},
+      {id:"2", label:"路線2（みどり台1-8〜1-12）", pipe:"φ150 FCD(T)", kind:"撤去",
+        items:[
+          {name:"配水管撤去", spec:"φ150 FCD(T)", unit:"m",  weekly:12.6, final:12.0},
+          {name:"残土処分",   spec:"—",            unit:"m3", weekly:3.2,  final:3.0}
+        ]},
+      {id:"3", label:"路線3（みどり台1-12〜1-15）", pipe:"φ150 FCD(CL)", kind:"新設",
+        items:[
+          {name:"配水管布設", spec:"φ150 FCD(CL)", unit:"m",  weekly:8.5, final:8.5},
+          {name:"継手",       spec:"φ150 CL",      unit:"箇所", weekly:2,   final:2},
+          {name:"土工・舗装復旧", spec:"アスファルト", unit:"m", weekly:8.5, final:8.5}
+        ]},
+      {id:"4", label:"路線4（みどり台1-15〜1-18）", pipe:"φ75 HPPE", kind:"新設",
+        items:[
+          {name:"配水管布設", spec:"φ75 HPPE", unit:"m", weekly:5.6, final:null},
+          {name:"土工・舗装復旧", spec:"アスファルト", unit:"m", weekly:5.6, final:null}
+        ]},
+      {id:"5", label:"路線5（弁・排泥工）", pipe:"仕切弁・排泥設備", kind:"新設",
+        items:[
+          {name:"仕切弁設置", spec:"φ150", unit:"基", weekly:1, final:1},
+          {name:"排泥工",     spec:"一式", unit:"式", weekly:1, final:1}
+        ]}
+    ]
+  },
+  "9005678":{
+    no:"第9005678号（架空）", name:"配水管整備工事（さくら台二丁目地区）",
+    contractor:"有限会社デモ工業", period:"2026.8.1〜12.20",
+    routes:[
+      {id:"1", label:"路線1（さくら台2-1〜2-6）", pipe:"φ200 DIP", kind:"新設",
+        items:[
+          {name:"配水管布設", spec:"φ200 DIP", unit:"m",  weekly:62.3, final:63.0},
+          {name:"継手",       spec:"φ200 K形",  unit:"箇所", weekly:9,    final:9},
+          {name:"土工・舗装復旧", spec:"アスファルト", unit:"m", weekly:62.3, final:63.0}
+        ]},
+      {id:"2", label:"路線2（さくら台2-6〜2-10）", pipe:"φ100 FCD(GX)", kind:"新設",
+        items:[
+          {name:"配水管布設", spec:"φ100 FCD(GX)", unit:"m",  weekly:38.0, final:38.0},
+          {name:"継手",       spec:"φ100 GX",      unit:"箇所", weekly:5,   final:4}
+        ]},
+      {id:"3", label:"路線3（仕切弁・消火栓）", pipe:"仕切弁・消火栓", kind:"新設",
+        items:[
+          {name:"仕切弁設置", spec:"φ200", unit:"基", weekly:2, final:2},
+          {name:"消火栓設置", spec:"単口", unit:"基", weekly:1, final:1}
+        ]}
+    ]
+  }
 };
-const COLOR={done:"#22c55e",work:"#f59e0b",todo:"#cbd5e1",warn:"#ef4444"};
-const BADGE={done:["b-done","確認済"],work:["b-work","施工済・未確認"],todo:["b-todo","未着手"],warn:["b-warn","⚠ 要確認"]};
-function render(k){
-  const d=DATA[k],[bc,bl]=BADGE[d.status];
-  const match=d.status==="warn"?`<div class="match ng">⚠ <b>数量不一致</b>：積算 ${d.est} ／ 完成 ${d.done}（差 -0.6m）→ 要確認</div>`
-    :(d.done==="—"?`<div class="match" style="background:var(--bg);border:1px solid var(--line);color:var(--sub)">未施工のため突合対象外</div>`
-    :`<div class="match ok">✓ <b>数量一致</b>：積算 ${d.est} ＝ 完成 ${d.done}</div>`);
-  const files=d.files.map((f,i)=>`<li class="${f[3]?'':'lock'}" ${f[3]?`onclick="openFile('${k}',${i})"`:''}><span>${f[0]}</span><span>${f[1]}</span><span class="sz">${f[2]}</span></li>`).join("");
-  document.getElementById("panel").innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center"><strong>${d.name}</strong><span class="badge ${bc}">${bl}</span></div>
-    <p class="meta">管種：<b>${d.pipe}</b>　区分：<b>${d.kind}</b></p>
-    <p class="meta">施工日：<b>${d.sdate}</b>　確認日：<b>${d.cdate}</b></p>${match}
-    <div style="font-weight:700;font-size:.84rem;margin-top:12px">📎 この工区に紐づくファイル</div><ul class="files">${files}</ul>`;
-  document.querySelectorAll(".seg,.node").forEach(e=>e.classList.toggle("sel",e.dataset.k===k));
+
+const COLOR={done:"#22c55e",work:"#f59e0b",todo:"#cbd5e1",warn:"#ef4444",fix:"#0ea5e9"};
+const BADGE={done:["b-done","数量一致"],todo:["b-todo","完成書類 未提出"],warn:["b-warn","⚠ 要確認"],fix:["b-fix","✔ 確定済"]};
+
+/* ---- 状態 ---- */
+const state={ kouji:"9001234", sel:null, confirmed:{} };  // confirmed: {"kouji/routeId":true}
+
+/* ---- 派生値（決定論） ---- */
+function cur(){ return KOUJI[state.kouji]; }
+function ckey(rid){ return state.kouji+"/"+rid; }
+function isConfirmed(rid){ return !!state.confirmed[ckey(rid)]; }
+function itemDiff(it){ return it.final==null ? null : +(it.final - it.weekly).toFixed(2); }
+function fixValue(it){ return it.final==null ? null : it.final; }  // 既定の確定値=完成書類側
+function routeHasFinal(r){ return r.items.every(it=>it.final!=null); }
+function routeMismatch(r){ return r.items.some(it=>{const d=itemDiff(it);return d!=null && d!==0;}); }
+function routeStatus(r){
+  if(isConfirmed(r.id)) return "fix";
+  if(!routeHasFinal(r)) return "todo";
+  return routeMismatch(r) ? "warn" : "done";
 }
-document.querySelectorAll(".seg,.node").forEach(e=>e.addEventListener("click",()=>render(e.dataset.k)));
+function fmtQty(v,unit){ if(v==null) return "—"; const n=Number.isInteger(v)?v:v.toFixed(1); return n+" "+unit; }
+function fmtDiff(d){
+  if(d==null) return '<span class="diff-na">—</span>';
+  if(d===0)  return '<span class="diff-zero">±0</span>';
+  const s=(d>0?"+":"")+ (Number.isInteger(d)?d:d.toFixed(1));
+  return '<span class="diff-pos">'+s+'</span>';
+}
+
+/* ============================================================ 描画 ============================================================ */
+function fillKoujiSelector(){
+  const sel=document.getElementById("koujiSel");
+  sel.innerHTML=Object.keys(KOUJI).map(k=>`<option value="${k}">${KOUJI[k].no}</option>`).join("");
+  sel.value=state.kouji;
+  sel.addEventListener("change",()=>{ state.kouji=sel.value; state.sel=null; renderAll(); });
+}
+function renderWork(){
+  const k=cur();
+  document.getElementById("workName").innerHTML="工事名：<b>"+k.name+"</b>";
+  document.getElementById("workContractor").innerHTML="受注者：<b>"+k.contractor+"</b>";
+  document.getElementById("workPeriod").innerHTML="工期：<b>"+k.period+"</b>";
+}
+
+/* ----- 図面ハブ ----- */
+function drawHub(){
+  const routes=cur().routes, n=routes.length;
+  const top=34, bottom=392, cx=200;
+  const ys=[]; for(let i=0;i<=n;i++) ys.push(top+(bottom-top)*i/n);
+  const xs=[]; for(let i=0;i<=n;i++) xs.push(cx + (i%2===0? -34 : 34));
+  xs[0]=cx;
+  let svg="";
+  routes.forEach((r,i)=>{
+    const st=routeStatus(r), col=COLOR[st];
+    const sel = state.sel===r.id ? " sel":"";
+    svg+=`<line class="seg${sel}" data-r="${r.id}" x1="${xs[i].toFixed(0)}" y1="${ys[i].toFixed(0)}" x2="${xs[i+1].toFixed(0)}" y2="${ys[i+1].toFixed(0)}" stroke="${col}" stroke-width="12"/>`;
+    if(i>0) svg+=`<circle class="node" data-r="${r.id}" cx="${xs[i].toFixed(0)}" cy="${ys[i].toFixed(0)}" r="8"/>`;
+    const mx=(xs[i]+xs[i+1])/2, my=(ys[i]+ys[i+1])/2;
+    svg+=`<text class="lbl" x="${(mx+16).toFixed(0)}" y="${my.toFixed(0)}">路線${r.id}</text>`;
+  });
+  document.getElementById("svg").innerHTML=svg;
+  document.querySelectorAll("#svg .seg,#svg .node").forEach(e=>e.addEventListener("click",()=>{state.sel=e.dataset.r;renderHub();renderPanel();}));
+  // KPI
+  let done=0,warn=0,todo=0,fix=0;
+  routes.forEach(r=>{const s=routeStatus(r); if(s==="done")done++;else if(s==="warn")warn++;else if(s==="todo")todo++;else if(s==="fix")fix++;});
+  document.getElementById("hubKpis").innerHTML=
+    `<div class="kpi"><div class="n">${n}</div><div class="l">全路線</div></div>`+
+    `<div class="kpi done"><div class="n">${done}</div><div class="l">数量一致</div></div>`+
+    `<div class="kpi warn"><div class="n">${warn}</div><div class="l">⚠要確認</div></div>`+
+    `<div class="kpi todo"><div class="n">${todo}</div><div class="l">未提出</div></div>`+
+    `<div class="kpi fix"><div class="n">${fix}</div><div class="l">確定済</div></div>`;
+}
+function renderHub(){ drawHub(); }
+function renderPanel(){
+  const r=cur().routes.find(x=>x.id===state.sel);
+  const p=document.getElementById("panel");
+  if(!r){ p.innerHTML='<div class="empty">← 図面の路線をクリック</div>'; return; }
+  const st=routeStatus(r),[bc,bl]=BADGE[st];
+  let match;
+  if(st==="todo") match='<div class="match na">完成書類が未提出のため突合対象外</div>';
+  else if(st==="warn"){
+    const bad=r.items.filter(it=>{const d=itemDiff(it);return d!=null&&d!==0;})
+      .map(it=>`${it.name}（週報 ${fmtQty(it.weekly,it.unit)} ／ 完成 ${fmtQty(it.final,it.unit)}・差 ${fmtDiff(itemDiff(it))}）`).join("、");
+    match=`<div class="match ng">⚠ <b>数量が食い違う科目</b>：${bad} → 要確認</div>`;
+  } else if(st==="fix") match='<div class="match ok">✔ <b>確定済</b>：この路線の数量は確定しました</div>';
+  else match='<div class="match ok">✓ <b>数量一致</b>：週報と完成書類が一致</div>';
+  const rows=r.items.map(it=>`<tr class="${(itemDiff(it)!=null&&itemDiff(it)!==0)?'warnrow':''}"><td class="l">${it.name}</td><td>${it.spec}</td><td>週報 ${fmtQty(it.weekly,it.unit)}</td><td>完成 ${fmtQty(it.final,it.unit)}</td><td>${fmtDiff(itemDiff(it))}</td></tr>`).join("");
+  p.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center"><strong>${r.label}</strong><span class="badge ${bc}">${bl}</span></div>
+    <p class="meta">管種：<b>${r.pipe}</b>　区分：<b>${r.kind}</b></p>${match}
+    <div style="font-weight:700;font-size:.84rem;margin-top:12px">🧮 積算票（科目×数量）</div>
+    <table style="margin-top:6px"><tr><th>科目</th><th>規格</th><th>週報</th><th>完成</th><th>差分</th></tr>${rows}</table>
+    <button class="btn sm ${st==='fix'?'ghost':''}" style="margin-top:10px" ${st==='todo'?'disabled':''} onclick="toggleConfirm('${r.id}')">${st==='fix'?'↺ 確定を取消':'✔ この路線を確定する'}</button>`;
+}
+
+/* ----- 現場入力（週報投入） ----- */
+function fillPhoneSelect(){
+  const sel=document.getElementById("pk");
+  sel.innerHTML=cur().routes.map(r=>`<option value="${r.id}">${r.label}</option>`).join("");
+}
+
+/* ----- 数量確定（突合表） ----- */
+function renderConfirm(){
+  const routes=cur().routes;
+  let itemCount=0, warnCount=0, fixCount=0, routeCount=routes.length;
+  let html='<tr><th style="width:24%">科目</th><th>規格</th><th>単位</th><th>週報（累積）</th><th>完成書類</th><th>差分</th><th>確定値</th></tr>';
+  routes.forEach(r=>{
+    const st=routeStatus(r),[bc,bl]=BADGE[st];
+    if(st==="warn")warnCount++;
+    if(st==="fix")fixCount++;
+    html+=`<tr class="rhead"><td colspan="7">${r.label}　<span style="font-weight:400;color:var(--sub)">${r.pipe}・${r.kind}</span>
+      <span class="st"><span class="badge ${bc}">${bl}</span>
+      <button class="btn sm ${st==='fix'?'ghost':''}" style="margin-left:8px" ${st==='todo'?'disabled':''} onclick="toggleConfirm('${r.id}')">${st==='fix'?'↺ 取消':'✔ 確定'}</button></span></td></tr>`;
+    r.items.forEach(it=>{
+      itemCount++;
+      const d=itemDiff(it), warnRow=(d!=null&&d!==0);
+      const conf=isConfirmed(r.id);
+      html+=`<tr class="${warnRow?'warnrow':''} ${conf?'confirmed':''}">
+        <td class="l">${it.name}</td><td>${it.spec}</td><td>${it.unit}</td>
+        <td>${fmtQty(it.weekly,it.unit)}</td><td>${fmtQty(it.final,it.unit)}</td>
+        <td>${fmtDiff(d)}</td>
+        <td class="fixval">${it.final==null?'—':fmtQty(fixValue(it),it.unit)}${conf?' ✔':''}</td></tr>`;
+    });
+  });
+  document.getElementById("confirmTable").innerHTML=html;
+  document.getElementById("confirmKpis").innerHTML=
+    `<div class="kpi"><div class="n">${routeCount}</div><div class="l">路線（積算票）</div></div>`+
+    `<div class="kpi"><div class="n">${itemCount}</div><div class="l">科目（明細行）</div></div>`+
+    `<div class="kpi warn"><div class="n">${warnCount}</div><div class="l">⚠要確認 路線</div></div>`+
+    `<div class="kpi fix"><div class="n">${fixCount}</div><div class="l">確定済 路線</div></div>`;
+}
+
+/* ----- 数量確定表（印刷帳票） ----- */
+function renderDoc(){
+  const k=cur(), routes=k.routes;
+  const today=docDate();
+  let totalM=0, itemCount=0, mismatchCount=0, routeCount=routes.length;
+  let blocks="";
+  routes.forEach(r=>{
+    let rows="", subM=0;
+    r.items.forEach(it=>{
+      itemCount++;
+      const d=itemDiff(it); if(d!=null&&d!==0)mismatchCount++;
+      const fv=fixValue(it);
+      if(it.unit==="m"&&fv!=null){subM+=fv;totalM+=fv;}
+      rows+=`<tr><td class="l">${it.name}</td><td>${it.spec}</td><td>${it.unit}</td>
+        <td>${fmtQty(it.weekly,it.unit)}</td><td>${fmtQty(it.final,it.unit)}</td>
+        <td><b>${fv==null?'—（未提出）':fmtQty(fv,it.unit)}</b></td></tr>`;
+    });
+    const conf=isConfirmed(r.id)?'　✔確定済':'';
+    blocks+=`<div class="route-block">
+      <p class="rb-title">路線番号 ${r.id}：${r.label}　<span style="font-weight:400;color:#475569">（${r.pipe}・${r.kind}）</span>${conf}</p>
+      <table><tr><th style="width:24%">科目</th><th>規格</th><th>単位</th><th>週報累積</th><th>完成書類</th><th>確定数量</th></tr>${rows}
+      <tr class="totalrow"><td colspan="5" class="l">路線 ${r.id} 小計（布設延長）</td><td>${subM>0?subM.toFixed(1)+' m':'—'}</td></tr></table>
+    </div>`;
+  });
+  document.getElementById("docSheet").innerHTML=`
+    <h2>路 線 別 数 量 確 定 表</h2>
+    <table class="dhead">
+      <tr><td class="k">工事番号</td><td>${k.no}</td><td class="k">出力日</td><td>${today}</td></tr>
+      <tr><td class="k">工事名</td><td>${k.name}</td><td class="k">受注者</td><td>${k.contractor}</td></tr>
+      <tr><td class="k">工期</td><td>${k.period}</td><td class="k">用途</td><td>積算システム入力用（数量確定）</td></tr>
+    </table>
+    ${blocks}
+    <table style="margin-top:6px">
+      <tr class="totalrow"><td class="l">工事番号 合計</td>
+        <td>路線 ${routeCount} 件</td><td>積算票科目 ${itemCount} 件</td>
+        <td colspan="2">布設延長 合計</td><td><b>${totalM.toFixed(1)} m</b></td></tr>
+    </table>
+    <p style="font-size:.82rem;margin:12px 0 0;line-height:1.7">
+      本表はFolderOSが週報の累積と完成書類を路線番号ごとに突合し、<b>食い違い ${mismatchCount} 件</b>を抽出、確認者が妥当性を判断のうえ確定した数量です。
+      確定数量は積算システムへの入力値として用います（数量の算出は行わず、拾い出し済み数量の確認・確定のみ）。
+    </p>
+    <div class="signblk">
+      <div><div class="lb">照合（FolderOS）</div>自動突合 済</div>
+      <div><div class="lb">確認者</div>　</div>
+      <div><div class="lb">確定日</div>${today}</div>
+    </div>
+    <p class="note" style="margin-top:10px">※ 合成データ（架空）。実在の事業者・図面・数値ではありません。全処理は御局のローカル環境内で完結し、外部に出しません。</p>`;
+}
+// 固定表示日（Date.now不使用のためデモ固定日）
+function docDate(){ return "2026年 7月 21日"; }
+
+/* ---- 確定トグル ---- */
+function toggleConfirm(rid){
+  const r=cur().routes.find(x=>x.id===rid); if(!r||!routeHasFinal(r))return;
+  state.confirmed[ckey(rid)] = !isConfirmed(rid);
+  renderAll();
+}
+window.toggleConfirm=toggleConfirm;
+
+/* ============================================================ 共通 ============================================================ */
+function renderAll(){
+  renderWork(); drawHub(); renderPanel(); fillPhoneSelect(); renderConfirm(); renderDoc();
+}
+
+/* タブ切替 */
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
   document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
   t.classList.add("active");document.getElementById(t.dataset.v).classList.add("active");
 }));
-function recolor(k,status){
-  document.querySelectorAll(`.seg[data-k="${k}"]`).forEach(s=>s.setAttribute("stroke",COLOR[status]));
-}
-document.getElementById("psend").addEventListener("click",()=>{
-  const k=document.getElementById("pk").value,q=document.getElementById("pq").value;
-  DATA[k].done=q+" m";if(DATA[k].status==="todo"){DATA[k].status="work";recolor(k,"work");
-    document.getElementById("kTodo").textContent=Math.max(0,parseInt(document.getElementById("kTodo").textContent)-1);}
-  const t=document.getElementById("ptoast");t.style.display="block";
-  t.innerHTML=`✓ 投入しました（${DATA[k].name} ／ 出来高 ${q}m）。図面ハブに反映されました。`;
-});
-// ---- ファイル簡易プレビュー ----
-function fileType(name){
-  if(name.indexOf('詳細図')>=0)return 'detail';
-  if(name.indexOf('配管図')>=0)return 'drawing';
-  if(name.indexOf('写真帳')>=0)return 'photos';
-  if(name.indexOf('検査表')>=0)return 'inspect';
-  if(name.indexOf('積算')>=0)return 'csv';
-  return 'detail';
-}
-function openFile(k,i){const f=DATA[k].files[i];if(!f[3])return;openPreview(fileType(f[1]),k,f[1]);}
-function closeModal(){document.getElementById('modal').classList.remove('open');}
-const WORK='配水小管布設替工事（みどり台一丁目地区）';
-function seg(x1,y1,x2,y2,c){return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="9" stroke-linecap="round"/>`}
-function drawingSheet(){
-  const C=k=>COLOR[DATA[k].status];
-  return `<div class="dwsheet">
-    <div style="text-align:center;font-weight:700;letter-spacing:.25em">配 管 図 （完 成 図）</div>
-    <svg viewBox="0 0 400 300" style="width:100%;height:auto;margin-top:6px;background:#fcfcfd">
-      ${seg(200,24,200,110,C('k1'))}${seg(200,110,150,185,C('k2'))}${seg(150,185,205,250,C('k3'))}${seg(205,250,250,292,C('k4'))}${seg(205,250,120,288,C('k5'))}
-      <circle cx="200" cy="110" r="7" fill="#fff" stroke="#334155" stroke-width="2"/><circle cx="205" cy="250" r="7" fill="#fff" stroke="#334155" stroke-width="2"/>
-      <text x="208" y="72" font-size="11" font-weight="700" fill="#334155">No.1</text><text x="120" y="155" font-size="11" font-weight="700" fill="#334155">No.2</text>
-      <text x="168" y="222" font-size="11" font-weight="700" fill="#334155">No.3</text><text x="255" y="280" font-size="11" font-weight="700" fill="#334155">No.4</text><text x="78" y="270" font-size="11" font-weight="700" fill="#334155">No.5</text>
-    </svg></div>
-    <div class="titleblk">
-      <div>工事名<br><b>${WORK}</b></div><div>種別<br><b>完成図</b></div>
-      <div>工事番号<br><b>第9001234号（架空）</b></div><div>受注者<br><b>株式会社サンプル建設</b></div>
-      <div>工期<br><b>2026.7.1〜11.30</b></div><div>縮尺<br><b>N.T.S</b></div>
-    </div>
-    <p class="synth">※ 合成データの簡易プレビューです（実在の図面ではありません）。</p>`;
-}
-function detailSheet(d){
-  return `<div class="dwsheet">
-    <div style="text-align:center;font-weight:700;letter-spacing:.2em">配 管 詳 細 図</div>
-    <svg viewBox="0 0 520 190" style="width:100%;height:auto;margin-top:6px">
-      <line x1="50" y1="95" x2="470" y2="95" stroke="#1f5b8c" stroke-width="11" stroke-linecap="round"/>
-      <circle cx="50" cy="95" r="9" fill="#fff" stroke="#334155" stroke-width="2"/><circle cx="470" cy="95" r="9" fill="#fff" stroke="#334155" stroke-width="2"/>
-      <text x="260" y="78" text-anchor="middle" font-size="14" fill="#1f5b8c" font-weight="700">${d.pipe}</text>
-      <text x="50" y="124" text-anchor="middle" font-size="10" fill="#64748b">継手</text><text x="470" y="124" text-anchor="middle" font-size="10" fill="#64748b">継手</text>
-      <line x1="50" y1="150" x2="470" y2="150" stroke="#64748b" stroke-width="1"/>
-      <line x1="50" y1="143" x2="50" y2="157" stroke="#64748b"/><line x1="470" y1="143" x2="470" y2="157" stroke="#64748b"/>
-      <text x="260" y="170" text-anchor="middle" font-size="13" fill="#334155">L = ${d.est}</text>
-    </svg></div>
-    <div class="titleblk">
-      <div>工事名<br><b>${WORK}</b></div><div>工区<br><b>${d.name}</b></div>
-      <div>管種・口径<br><b>${d.pipe}</b></div><div>区分<br><b>${d.kind}</b></div>
-      <div>延長<br><b>${d.est}</b></div><div>受注者<br><b>株式会社サンプル建設</b></div>
-    </div>
-    <p class="synth">※ 合成データの簡易プレビューです。</p>`;
-}
-function photosSheet(d){
-  const tiles=[1,2,3,4,5,6].map(i=>`<div class="pt"><span>📷</span>写真 ${i}<br>${d.name}</div>`).join('');
-  return `<div class="photgrid">${tiles}</div><p class="synth">※ 合成のサンプル画像枠です（実写真ではありません）。各写真に工区・撮影日・位置が紐づく想定。</p>`;
-}
-function inspectSheet(d){
-  return `<table>
-    <tr><th>検査項目</th><th>規格</th><th>測定値</th><th>判定</th></tr>
-    <tr><td class="l">管径</td><td>φ150</td><td>150</td><td>合格</td></tr>
-    <tr><td class="l">継手接合</td><td>所定トルク</td><td>規定内</td><td>合格</td></tr>
-    <tr><td class="l">土被り</td><td>1.20m 以上</td><td>1.25m</td><td>合格</td></tr>
-    <tr><td class="l">水圧試験</td><td>0.75MPa</td><td>0.75MPa</td><td>合格</td></tr>
-  </table><p class="synth">※ 合成データ。${d.name} の部品検査表（イメージ）。</p>`;
-}
-function csvSheet(d){
-  return `<table>
-    <tr><th>科目</th><th>規格</th><th>数量</th><th>単価</th><th>金額</th></tr>
-    <tr><td class="l">配水管布設</td><td>${d.pipe}</td><td>${d.est}</td><td>¥●●</td><td>¥●●●</td></tr>
-    <tr><td class="l">継手</td><td>${d.pipe} 用</td><td>2 個</td><td>¥●●</td><td>¥●●</td></tr>
-    <tr><td class="l">土工・舗装復旧</td><td>一式</td><td>1 式</td><td>¥●●</td><td>¥●●●</td></tr>
-  </table><p class="synth">※ 合成データ。${d.name} の積算明細（イメージ）。金額はマスク。</p>`;
-}
-function openPreview(type,k,fname){
-  let body='';
-  if(type==='drawing'){fname='配管図（完成図）.pdf';body=drawingSheet();}
-  else{const d=DATA[k];
-    if(type==='detail'){body=detailSheet(d);}
-    else if(type==='photos'){body=photosSheet(d);}
-    else if(type==='inspect'){body=inspectSheet(d);}
-    else if(type==='csv'){body=csvSheet(d);}
-  }
-  document.getElementById('mfn').textContent=fname||'';
-  document.getElementById('mbody').innerHTML=body;
-  document.getElementById('modal').classList.add('open');
-}
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 
-// ---- FolderOS 整理デモ ----
+/* 週報投入 */
+document.getElementById("psend").addEventListener("click",()=>{
+  const rid=document.getElementById("pk").value, q=parseFloat(document.getElementById("pq").value);
+  const r=cur().routes.find(x=>x.id===rid);
+  const t=document.getElementById("ptoast");t.style.display="block";
+  if(!r||isNaN(q)){ t.innerHTML="数値を入力してください。"; return; }
+  r.items[0].weekly=q;  // 先頭科目（配水管）の週報累積を更新
+  if(isConfirmed(rid)) state.confirmed[ckey(rid)]=false; // 再投入で確定解除
+  t.innerHTML=`✓ 週報を投入しました（${r.label} ／ 出来高 ${q}m）。図面ハブ・数量確定に反映されました。`;
+  renderAll();
+});
+
+/* 全確定 / リセット */
+document.getElementById("confirmAll").addEventListener("click",()=>{
+  cur().routes.forEach(r=>{ if(routeHasFinal(r)) state.confirmed[ckey(r.id)]=true; });
+  renderAll();
+});
+document.getElementById("resetConfirm").addEventListener("click",()=>{
+  cur().routes.forEach(r=>{ delete state.confirmed[ckey(r.id)]; });
+  renderAll();
+});
+
+/* FolderOS 整理デモ */
 (function(){
   var ob=document.getElementById('organizeBtn');
-  if(!ob)return;
   ob.addEventListener('click',function(){
     document.getElementById('after').innerHTML =
       '<div style="font-size:.84rem;line-height:1.5">'
       +'<div style="margin-bottom:7px"><b>📐 配管図</b><div class="sub" style="margin-left:14px">配管図_確定版.pdf</div></div>'
       +'<div style="margin-bottom:7px"><b>📊 数量計算書</b><div class="sub" style="margin-left:14px">数量計算書_最終2.xlsx</div></div>'
-      +'<div style="margin-bottom:7px"><b>📷 工事写真</b><div class="sub" style="margin-left:14px">IMG_20260903_1412.jpg ／ DSC_0099.JPG ／ No2写真まとめ.zip ／ スキャン0912.pdf</div></div>'
-      +'<div style="margin-bottom:7px"><b>📋 検査表</b><div class="sub" style="margin-left:14px">検査表(コピー).pdf ／ 部品リスト.xlsx</div></div>'
+      +'<div style="margin-bottom:7px"><b>🗓️ 週報</b><div class="sub" style="margin-left:14px">週報_0905.pdf</div></div>'
+      +'<div style="margin-bottom:7px"><b>📄 完成数量表</b><div class="sub" style="margin-left:14px">完成数量表(コピー).pdf</div></div>'
+      +'<div style="margin-bottom:7px"><b>📷 工事写真</b><div class="sub" style="margin-left:14px">IMG_20260903_1412.jpg ／ DSC_0099.JPG ／ 路線2写真まとめ.zip</div></div>'
+      +'<div style="margin-bottom:7px"><b>📋 検査表</b><div class="sub" style="margin-left:14px">部品検査表.xlsx</div></div>'
       +'<div style="margin-bottom:7px"><b>🧮 積算</b><div class="sub" style="margin-left:14px">積算入力_new.csv</div></div>'
       +'<div style="margin-bottom:7px"><b>🗒️ その他</b><div class="sub" style="margin-left:14px">メモ_出来高.txt</div></div>'
-      +'<div style="margin-top:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px">✓ 10件のファイルを内容から判別し、6カテゴリに自動整理しました。</div></div>';
+      +'<div style="margin-top:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px">✓ 10件のファイルを内容から判別し、路線番号・書類種別に自動整理しました。</div></div>';
     ob.textContent='✓ 整理しました';
   });
 })();
 
-// ---- 新しい積算システム（図面ハブ連動）----
-const SEKI={
- k1:{name:'No.1工区',sub:'¥993,000',rows:[['配水管布設','φ150 FCD(GX)','45.0 m','¥12,000','¥540,000'],['継手','φ150 GX','6 箇所','¥8,000','¥48,000'],['土工・舗装復旧','—','45.0 m','¥9,000','¥405,000']]},
- k2:{name:'No.2工区',sub:'¥157,000',rows:[['配水管撤去','φ150 FCD(T)','12.0 m','¥6,000','¥72,000'],['仮設・残土処分','一式','1 式','¥85,000','¥85,000']]},
- k3:{name:'No.3工区',sub:'¥194,500',rows:[['配水管布設','φ150 FCD(CL)','8.5 m','¥12,000','¥102,000'],['継手','φ150 CL','2 箇所','¥8,000','¥16,000'],['土工・舗装復旧','—','8.5 m','¥9,000','¥76,500']]},
- k4:{name:'No.4工区',sub:'¥72,800',rows:[['配水管布設','φ75 HPPE','5.6 m','¥7,000','¥39,200'],['土工・舗装復旧','—','5.6 m','¥6,000','¥33,600']]},
- k5:{name:'No.5工区（弁・排泥工）',sub:'¥180,000',rows:[['仕切弁','φ150','1 基','¥120,000','¥120,000'],['排泥工','一式','1 式','¥60,000','¥60,000']]}
-};
-function renderSeki(k){
-  var d=SEKI[k];if(!d)return;
-  var hd=document.getElementById('sekHead');if(hd)hd.textContent=d.name+' の積算明細';
-  var rows='<tr><th>科目</th><th>規格</th><th>数量</th><th>単価</th><th>金額</th></tr>';
-  d.rows.forEach(function(r){rows+='<tr><td class="l">'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td><td>'+r[3]+'</td><td>'+r[4]+'</td></tr>';});
-  var tb=document.getElementById('sekTable');if(tb)tb.innerHTML=rows;
-  var sb=document.getElementById('sekSub');if(sb)sb.innerHTML='小計：<b>'+d.sub+'</b>';
-  document.querySelectorAll('.ksg').forEach(function(s){s.classList.toggle('sel',s.dataset.sk===k);});
-}
-document.querySelectorAll('.ksg').forEach(function(s){s.addEventListener('click',function(){renderSeki(s.dataset.sk);});});
-renderSeki('k1');
-function switchTab(v){var t=document.querySelector('.tab[data-v="'+v+'"]');if(t)t.click();}
-
-render("k2");
+/* 初期化 */
+fillKoujiSelector();
+renderAll();
 (function(){var m=location.search.match(/tab=(\w+)/);if(m){var t=document.querySelector('.tab[data-v="'+m[1]+'"]');if(t)t.click();}})();
-if(location.search.indexOf('p=detail')>=0)openPreview('detail','k2');
-if(location.search.indexOf('p=draw')>=0)openPreview('drawing');
-if(location.search.indexOf('organized')>=0){var ob2=document.getElementById('organizeBtn');if(ob2)ob2.click();}
 </script>
 </body>
 </html>
