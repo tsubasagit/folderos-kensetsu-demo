@@ -112,6 +112,9 @@
   .signblk div{border:.5px solid #94a3b8;padding:14px 8px 22px;text-align:center}
   .signblk .lb{font-size:.72rem;color:var(--sub)}
   .filterbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+  #register input{border:1px solid var(--line);border-radius:6px;padding:5px 7px;font-size:.82rem;font-family:inherit}
+  #register input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 1px var(--primary) inset}
+  #register td{padding:4px 5px}
   footer{padding:14px 18px;font-size:.72rem;color:var(--sub);text-align:center;border-top:1px solid var(--line);background:#fff}
   .newbadge{display:inline-block;background:#ea580c;color:#fff;font-size:.66rem;font-weight:700;padding:2px 9px;border-radius:999px;margin-left:8px;vertical-align:middle}
   @media print{
@@ -188,6 +191,7 @@
     <div class="subtab" data-v="hub">🗺️ 図面ハブ（路線）</div>
     <div class="subtab active" data-v="confirm">🧮 数量確定（予定⇔完成）🆕</div>
     <div class="subtab" data-v="doc">📄 数量確定表（印刷）🆕</div>
+    <div class="subtab" data-v="register">⚙️ 工事・数量の登録 🆕</div>
   </div>
   <div class="wrap">
     <!-- 図面ハブ -->
@@ -238,6 +242,18 @@
       </div>
       <div class="doc" id="docSheet"></div>
     </section>
+
+    <!-- 登録・手入力（MVP） -->
+    <section class="view" id="register">
+      <h3 style="margin:0 0 6px">⚙️ 工事・路線・数量の登録（手入力） <span class="newbadge">🆕 MVP</span></h3>
+      <p style="font-size:.84rem;color:var(--sub);margin:0 0 10px">工事番号・路線番号・積算票（<b>予定積算</b>と<b>完成後積算</b>の数量）を手入力できます。入力は<b>自動保存</b>され、図面ハブ・数量確定・確定表・現場用に即反映されます。</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="btn sm ghost" id="resetAllBtn">↺ サンプルに戻す（入力を全消去）</button>
+      </div>
+      <div id="regKouji" class="panelbox" style="margin-bottom:12px"></div>
+      <div id="regRoutes" class="panelbox" style="margin-bottom:12px"></div>
+      <div id="regItems" class="panelbox"></div>
+    </section>
   </div>
 </div>
 
@@ -252,7 +268,7 @@
    actual = 完成後積算（出来形数量。現場が提出。null=現場未提出）
    差分 = actual - plan（JS算出）
    ============================================================ */
-const KOUJI = {
+const SEED = {
   "9001234":{
     no:"第9001234号（架空）", name:"配水小管布設替工事（みどり台一丁目地区）",
     contractor:"株式会社サンプル建設", period:"2026.7.1〜11.30",
@@ -314,8 +330,15 @@ const BADGE={done:["b-done","数量一致"],todo:["b-todo","現場未提出"],wa
 
 const state={ role:"suido", kouji:"9001234", tab:"confirm", sel:null, genbaRoute:null, confirmed:{}, filter:"all" };
 
+/* ---- 永続化（localStorage・手入力MVP） ---- */
+const LSKEY='suido_mvp_v1';
+function saveDB(){ try{ localStorage.setItem(LSKEY, JSON.stringify({data:DB, confirmed:state.confirmed})); }catch(e){} }
+function loadDB(){ try{ const s=localStorage.getItem(LSKEY); if(s){ const o=JSON.parse(s); if(o&&o.confirmed) state.confirmed=o.confirmed; if(o&&o.data) return o.data; } }catch(e){} return null; }
+let DB = loadDB() || JSON.parse(JSON.stringify(SEED));
+if(!DB[state.kouji]) state.kouji=Object.keys(DB)[0];
+
 /* 派生値（決定論） */
-function cur(){ return KOUJI[state.kouji]; }
+function cur(){ return DB[state.kouji]; }
 function ck(rid){ return state.kouji+"/"+rid; }
 function isConf(rid){ return !!state.confirmed[ck(rid)]; }
 function diff(it){ return it.actual==null ? null : +(it.actual - it.plan).toFixed(2); }
@@ -354,7 +377,7 @@ document.querySelectorAll(".rolebtn").forEach(b=>b.addEventListener("click",()=>
 /* ============ 共通ヘッダ ============ */
 function fillKouji(){
   const sel=document.getElementById("koujiSel");
-  sel.innerHTML=Object.keys(KOUJI).map(k=>`<option value="${k}">${KOUJI[k].no}</option>`).join("");
+  sel.innerHTML=Object.keys(DB).map(k=>`<option value="${k}">${DB[k].no}</option>`).join("");
   sel.value=state.kouji;
   sel.addEventListener("change",()=>{ state.kouji=sel.value; state.sel=null; state.genbaRoute=null; renderAll(); });
 }
@@ -403,6 +426,7 @@ function submitGenba(rid){
     if(el){ const v=parseFloat(el.value); it.actual = isNaN(v)? null : v; }
   });
   if(isConf(rid)) delete state.confirmed[ck(rid)];
+  saveDB();
   renderGenba();
   const t=document.getElementById("gtoast");t.style.display="block";
   t.innerHTML=`✓ ${r.label} の出来形を提出しました。水道局用の「数量確定」に即反映されます。`;
@@ -539,11 +563,11 @@ function renderDoc(){
 function toggleConf(rid){
   const r=cur().routes.find(x=>x.id===rid); if(!r||!hasActual(r))return;
   state.confirmed[ck(rid)] = !isConf(rid);
-  renderAll();
+  saveDB(); renderAll();
 }
 window.toggleConf=toggleConf;
-document.getElementById("confirmAll").addEventListener("click",()=>{ cur().routes.forEach(r=>{ if(hasActual(r)) state.confirmed[ck(r.id)]=true; }); renderAll(); });
-document.getElementById("resetConfirm").addEventListener("click",()=>{ cur().routes.forEach(r=>delete state.confirmed[ck(r.id)]); renderAll(); });
+document.getElementById("confirmAll").addEventListener("click",()=>{ cur().routes.forEach(r=>{ if(hasActual(r)) state.confirmed[ck(r.id)]=true; }); saveDB(); renderAll(); });
+document.getElementById("resetConfirm").addEventListener("click",()=>{ cur().routes.forEach(r=>delete state.confirmed[ck(r.id)]); saveDB(); renderAll(); });
 document.getElementById("fltAll").addEventListener("click",()=>{ state.filter="all"; renderConfirm(); });
 document.getElementById("fltWarn").addEventListener("click",()=>{ state.filter="warn"; renderConfirm(); });
 
@@ -555,11 +579,111 @@ document.querySelectorAll(".subtab").forEach(t=>t.addEventListener("click",()=>{
   t.classList.add("active");document.getElementById(t.dataset.v).classList.add("active");
 }));
 
+/* ============ 登録・手入力（MVP） ============ */
+function nextRouteId(k){
+  const ids=DB[k].routes.map(r=>parseInt(r.id,10)).filter(n=>!isNaN(n));
+  return String((ids.length?Math.max.apply(null,ids):0)+1);
+}
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function renderRegister(){
+  // A) 工事番号
+  const koHtml=Object.keys(DB).map(k=>{
+    const on=k===state.kouji;
+    return `<tr>
+      <td class="l">${on?'▶ ':''}<b>${DB[k].no}</b><div style="font-size:.74rem;color:var(--sub)">${esc(DB[k].name)}</div></td>
+      <td>${DB[k].routes.length} 路線</td>
+      <td>${on?'<span class="badge b-fix">選択中</span>':`<button class="btn sm ghost" onclick="selectKouji('${k}')">選択</button>`}</td>
+      <td><button class="btn sm ghost" onclick="delKouji('${k}')" ${Object.keys(DB).length<=1?'disabled':''}>削除</button></td>
+    </tr>`;}).join("");
+  document.getElementById("regKouji").innerHTML=`
+    <h3 style="font-size:.9rem;margin:0 0 8px">① 工事番号</h3>
+    <table><tr><th style="width:44%">工事番号 / 工事名</th><th>路線数</th><th>選択</th><th>操作</th></tr>${koHtml}</table>
+    <div style="margin-top:10px;display:grid;grid-template-columns:repeat(4,1fr) auto;gap:6px;align-items:end">
+      <div><label style="font-size:.72rem;color:var(--sub)">工事番号</label><input id="nk_no" placeholder="例: 9009999" style="width:100%"></div>
+      <div><label style="font-size:.72rem;color:var(--sub)">工事名</label><input id="nk_name" placeholder="○○工事" style="width:100%"></div>
+      <div><label style="font-size:.72rem;color:var(--sub)">受注者</label><input id="nk_con" placeholder="株式会社○○" style="width:100%"></div>
+      <div><label style="font-size:.72rem;color:var(--sub)">工期</label><input id="nk_per" placeholder="2026.x〜x" style="width:100%"></div>
+      <button class="btn sm" onclick="addKouji()">＋追加</button>
+    </div>`;
+  // B) 路線
+  const rHtml=cur().routes.map(r=>`<tr>
+      <td class="l"><b>路線${r.id}</b> ${esc(r.label)}</td><td>${esc(r.pipe)}</td><td>${esc(r.kind)}</td>
+      <td>${r.items.length} 科目</td>
+      <td><button class="btn sm ghost" onclick="delRoute('${r.id}')">削除</button></td>
+    </tr>`).join("");
+  document.getElementById("regRoutes").innerHTML=`
+    <h3 style="font-size:.9rem;margin:0 0 8px">② 路線番号（選択中：${DB[state.kouji].no}）</h3>
+    <table><tr><th style="width:40%">路線</th><th>管種</th><th>区分</th><th>科目数</th><th>操作</th></tr>${rHtml||'<tr><td colspan="5" class="l" style="color:var(--sub)">路線がありません。下から追加してください。</td></tr>'}</table>
+    <div style="margin-top:10px;display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:6px;align-items:end">
+      <div><label style="font-size:.72rem;color:var(--sub)">路線ラベル</label><input id="nr_label" placeholder="路線x（○○1-1〜）" style="width:100%"></div>
+      <div><label style="font-size:.72rem;color:var(--sub)">管種・口径</label><input id="nr_pipe" placeholder="φ150 FCD(GX)" style="width:100%"></div>
+      <div><label style="font-size:.72rem;color:var(--sub)">区分</label><input id="nr_kind" placeholder="新設/撤去" style="width:100%"></div>
+      <button class="btn sm" onclick="addRoute()">＋追加</button>
+    </div>`;
+  // C) 積算票（科目×予定/完成）
+  const blocks=cur().routes.map(r=>{
+    const rows=r.items.map((it,i)=>`<tr>
+      <td><input value="${esc(it.name)}" onchange="editItem('${r.id}',${i},'name',this.value)" style="width:100%"></td>
+      <td><input value="${esc(it.spec)}" onchange="editItem('${r.id}',${i},'spec',this.value)" style="width:100%"></td>
+      <td><input value="${esc(it.unit)}" onchange="editItem('${r.id}',${i},'unit',this.value)" style="width:64px"></td>
+      <td class="col-plan"><input value="${it.plan}" inputmode="decimal" onchange="editItem('${r.id}',${i},'plan',this.value)" style="width:80px"></td>
+      <td class="col-actual"><input value="${it.actual==null?'':it.actual}" inputmode="decimal" placeholder="未提出" onchange="editItem('${r.id}',${i},'actual',this.value)" style="width:80px"></td>
+      <td>${fd(diff(it))}</td>
+      <td><button class="btn sm ghost" onclick="delItem('${r.id}',${i})">×</button></td>
+    </tr>`).join("");
+    return `<div style="margin-bottom:14px">
+      <div style="font-weight:700;font-size:.85rem;margin-bottom:4px">路線${r.id}：${esc(r.label)}</div>
+      <table><tr><th>科目</th><th>規格</th><th>単位</th><th class="col-plan">予定積算</th><th class="col-actual">完成後積算</th><th>差分</th><th></th></tr>${rows||''}</table>
+      <button class="btn sm ghost" style="margin-top:6px" onclick="addItem('${r.id}')">＋科目を追加</button>
+    </div>`;}).join("");
+  document.getElementById("regItems").innerHTML=`
+    <h3 style="font-size:.9rem;margin:0 0 8px">③ 積算票（科目×数量）— 予定積算と完成後積算を手入力</h3>
+    ${blocks||'<p class="note">路線を追加すると、ここで科目・数量を入力できます。</p>'}`;
+}
+function selectKouji(k){ state.kouji=k; state.sel=null; state.genbaRoute=null; fillKouji(); renderAll(); }
+function delKouji(k){ if(Object.keys(DB).length<=1)return; if(!confirm(DB[k].no+' を削除しますか？'))return; delete DB[k]; if(state.kouji===k)state.kouji=Object.keys(DB)[0]; saveDB(); fillKouji(); renderAll(); }
+function addKouji(){
+  const no=document.getElementById("nk_no").value.trim();
+  if(!no){ alert('工事番号を入力してください'); return; }
+  const key=no.replace(/[^0-9A-Za-z]/g,'')||('k'+Object.keys(DB).length);
+  if(DB[key]){ alert('その工事番号は既にあります'); return; }
+  DB[key]={ no:(/号/.test(no)?no:('第'+no+'号')), name:document.getElementById("nk_name").value.trim()||'（工事名未入力）',
+    contractor:document.getElementById("nk_con").value.trim()||'（受注者未入力）', period:document.getElementById("nk_per").value.trim()||'—', routes:[] };
+  state.kouji=key; saveDB(); fillKouji(); renderAll();
+}
+function addRoute(){
+  const label=document.getElementById("nr_label").value.trim();
+  if(!label){ alert('路線ラベルを入力してください'); return; }
+  const id=nextRouteId(state.kouji);
+  cur().routes.push({ id, label, pipe:document.getElementById("nr_pipe").value.trim()||'—', kind:document.getElementById("nr_kind").value.trim()||'新設', items:[] });
+  saveDB(); renderAll();
+}
+function delRoute(rid){ cur().routes=cur().routes.filter(r=>r.id!==rid); delete state.confirmed[ck(rid)]; saveDB(); renderAll(); }
+function addItem(rid){ const r=cur().routes.find(x=>x.id===rid); if(!r)return; r.items.push({name:'新規科目',spec:'—',unit:'m',plan:0,actual:null}); saveDB(); renderAll(); }
+function delItem(rid,idx){ const r=cur().routes.find(x=>x.id===rid); if(!r)return; r.items.splice(idx,1); saveDB(); renderAll(); }
+function editItem(rid,idx,field,val){
+  const r=cur().routes.find(x=>x.id===rid); if(!r||!r.items[idx])return;
+  if(field==='plan'){ const n=parseFloat(val); r.items[idx].plan=isNaN(n)?0:n; }
+  else if(field==='actual'){ const t=String(val).trim(); r.items[idx].actual = t===''?null:(isNaN(parseFloat(t))?null:parseFloat(t)); }
+  else r.items[idx][field]=val;
+  if(isConf(rid)) delete state.confirmed[ck(rid)];  // 数量変更で確定は解除
+  saveDB(); renderDerived();
+}
+window.selectKouji=selectKouji; window.delKouji=delKouji; window.addKouji=addKouji;
+window.addRoute=addRoute; window.delRoute=delRoute; window.addItem=addItem; window.delItem=delItem; window.editItem=editItem;
+document.getElementById("resetAllBtn").addEventListener("click",()=>{
+  if(!confirm('入力を全消去してサンプルに戻しますか？'))return;
+  try{ localStorage.removeItem(LSKEY); }catch(e){}
+  DB=JSON.parse(JSON.stringify(SEED)); state.confirmed={}; state.kouji=Object.keys(DB)[0]; state.sel=null; state.genbaRoute=null;
+  fillKouji(); renderAll();
+});
+
 /* ============ 全体描画 ============ */
+function renderDerived(){ drawHub(); renderPanel(); renderConfirm(); renderDoc(); }
 function renderAll(){
   renderHeader();
   if(state.role==="genba"){ renderGenba(); }
-  else { drawHub(); renderPanel(); renderConfirm(); renderDoc(); }
+  else { drawHub(); renderPanel(); renderConfirm(); renderDoc(); renderRegister(); }
 }
 
 /* 初期化 */
