@@ -81,6 +81,16 @@
   .rchip.on{background:#f59e0b;color:#fff;border-color:#f59e0b}
   .notetext{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.84rem;font-family:inherit;min-height:48px;resize:vertical}
   .notestamp{font-size:.74rem;color:#16a34a;font-weight:700;min-height:1em}
+  .dockpick{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .dockpick-head{font-weight:800;font-size:.92rem;margin-bottom:8px}
+  .dockpick-head .sub{font-weight:500;font-size:.76rem;color:var(--sub);margin-left:6px}
+  .dockpick-row{display:flex;flex-wrap:wrap;gap:8px}
+  .dchip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px;font-size:.85rem;font-weight:700;cursor:pointer;color:var(--primary-d)}
+  .dchip.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .dchip.dis{opacity:.55;cursor:not-allowed;color:var(--sub);font-weight:500}
+  .dockpick-actions{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
+  .dockpick-count{margin-left:auto;font-size:.82rem;color:var(--primary-d);font-weight:800}
+  @media print{.dockpick{display:none}}
   .col-plan{background:#f1f5f9}.col-actual{background:#eff6ff}
   .diff-pos{color:#b45309;font-weight:700}.diff-zero{color:var(--sub)}.diff-na{color:#94a3b8}
   .fixval{font-weight:700;color:var(--primary)}
@@ -308,6 +318,7 @@
         <h3 style="margin:0">📄 工区・管理番号別 数量確定表</h3>
         <button class="btn sm" style="margin-left:auto" onclick="window.print()">🖨️ 印刷／PDF保存</button>
       </div>
+      <div id="docKokuPicker" style="max-width:860px;margin:0 auto 12px"></div>
       <div class="doc" id="docSheet"></div>
     </section>
 
@@ -392,7 +403,7 @@ function inflate(raw){
   return o;
 }
 
-const state={ role:"suido", kouji:"1600000", tab:"hub", axis:"koku", sel:null, genbaRoute:null, confirmed:{}, filter:"all", highlight:null, myKoku:null, regSel:[], photos:{}, regWard:null, notes:{} };
+const state={ role:"suido", kouji:"1600000", tab:"hub", axis:"koku", sel:null, genbaRoute:null, confirmed:{}, filter:"all", highlight:null, myKoku:null, regSel:[], photos:{}, regWard:null, notes:{}, docKokus:[] };
 const WARDS=[
   {name:"葛飾区", active:true, note:"現在 No.1〜No.4（4工区）"},
   {name:"△△区", active:false, note:"担当工区なし（匿名）"},
@@ -791,6 +802,11 @@ function toggleReason(koku,reason,el){ const n=ensureNote(koku); n.reasons=n.rea
 function saveNote(koku,val){ ensureNote(koku).comment=val; saveDB(); markSaved(koku); }
 function markSaved(koku){ const s=document.getElementById("ns-"+cssId(koku)); if(s)s.textContent="保存しました ✓"; }
 window.toggleReason=toggleReason; window.saveNote=saveNote;
+/* ── 数量確定表：出力する確定済み工区を選ぶ ── */
+function toggleDocKoku(k){ const i=state.docKokus.indexOf(k); if(i>=0)state.docKokus.splice(i,1); else state.docKokus.push(k); renderDoc(); }
+function selectAllDocKoku(){ state.docKokus=kokuList().filter(k=>statusK(k)==="fix"); renderDoc(); }
+function clearDocKoku(){ state.docKokus=[]; renderDoc(); }
+window.toggleDocKoku=toggleDocKoku; window.selectAllDocKoku=selectAllDocKoku; window.clearDocKoku=clearDocKoku;
 document.getElementById("confirmAll").addEventListener("click",()=>{ mngUnits().forEach(u=>{ if(hasActualM(u)) state.confirmed[CK(u.mng)]=true; }); saveDB(); renderSuido(); });
 document.getElementById("resetConfirm").addEventListener("click",()=>{ mngUnits().forEach(u=>delete state.confirmed[CK(u.mng)]); saveDB(); renderSuido(); });
 document.getElementById("fltAll").addEventListener("click",()=>{ state.filter="all"; renderConfirm(); });
@@ -808,7 +824,29 @@ document.querySelectorAll(".subtab").forEach(t=>t.addEventListener("click",()=>{
 
 /* ============ 印刷帳票（工区→管理番号→工種）============ */
 function renderDoc(){
-  const k=cur(), today="2026年 7月 21日", kokus=kokuList();
+  const k=cur(), today="2026年 7月 21日";
+  const all=kokuList();
+  const sel=state.docKokus.filter(kk=>statusK(kk)==="fix");
+  const anyFixed=all.some(kk=>statusK(kk)==="fix");
+  // ① 確定表に出す「確定済みの工区」を選ぶピッカー
+  const pick=all.map(kk=>{ const fixed=statusK(kk)==="fix", on=sel.includes(kk);
+    return `<button class="dchip${on?' on':''}${fixed?'':' dis'}" ${fixed?`onclick="toggleDocKoku('${kk}')"`:'disabled'}>`+
+      `${lblKoku(kk)}工区 ${fixed?(on?'✔ 選択中':'＋ 追加'):'（未確定）'}</button>`;
+  }).join("");
+  document.getElementById("docKokuPicker").innerHTML=
+    `<div class="dockpick"><div class="dockpick-head">① 確定表に出す<b>確定済みの工区</b>を選ぶ<span class="sub">②数量確定で「確定済」になった工区だけ選べます</span></div>`+
+    `<div class="dockpick-row">${pick}</div>`+
+    `<div class="dockpick-actions">`+
+      (anyFixed?`<button class="btn sm ghost" onclick="selectAllDocKoku()">確定済みをすべて選択</button><button class="btn sm ghost" onclick="clearDocKoku()">選択解除</button>`:``)+
+      `<span class="dockpick-count">${sel.length} 工区を確定表に出力</span></div></div>`;
+  if(sel.length===0){
+    document.getElementById("docSheet").innerHTML=
+      `<div class="empty" style="max-width:860px;margin:0 auto">${anyFixed
+        ? '↑ 上で「確定表に出す工区」を選んでください。'
+        : 'まだ確定済みの工区がありません。<br>「② 数量確定」で工区を確定すると、ここで選べるようになります。'}</div>`;
+    return;
+  }
+  const kokus=sel;
   let blocks="", gPlan=0,gFix=0,gItem=0,gMis=0;
   kokus.forEach(kk=>{
     const rs=recs().filter(r=>r.koku===kk);
@@ -837,7 +875,7 @@ function renderDoc(){
     </table>
     ${blocks}
     <table style="margin-top:6px">
-      <tr class="totalrow"><td class="l">工事番号 合計</td><td>工区 ${kokus.length} 件</td><td>管理番号 ${mngUnits().length} 件</td>
+      <tr class="totalrow"><td class="l">工事番号 合計（選択工区）</td><td>工区 ${kokus.length} 件</td><td>管理番号 ${mngUnits().filter(u=>kokus.includes(u.koku)).length} 件</td>
         <td>科目 ${gItem} 件</td><td class="col-plan">予定 ${gPlan.toFixed(1)} m</td><td colspan="3">確定 新設φ150 延長</td><td><b>${gFix.toFixed(1)} m</b></td></tr>
     </table>
     <p style="font-size:.82rem;margin:12px 0 0;line-height:1.7">本表はFolderOSが<b>予定積算（週報累積）</b>と<b>完成後積算（完成図の実延長）</b>を管理番号ごとに突合し、<b>差分 ${gMis} 件</b>を抽出、確認者が妥当性を判断のうえ確定した数量です。番号は統一せず、各書類の固有番号を管理番号に名寄せしています。</p>
