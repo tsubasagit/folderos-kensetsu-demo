@@ -87,6 +87,16 @@
   .gseg{stroke-linecap:round;cursor:pointer}
   .gseg.pick{filter:drop-shadow(0 0 5px rgba(180,83,9,.55))}
   .glbl{font-size:13px;fill:#334155;pointer-events:none}
+  .wardgrid{display:flex;flex-direction:column;gap:7px;margin-top:4px}
+  .wardcard{display:flex;justify-content:space-between;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:11px 13px;background:#fff;cursor:pointer;text-align:left;font-family:inherit;width:100%}
+  .wardcard b{font-size:.9rem;color:#0f172a}
+  .wardcard span{font-size:.72rem;color:var(--sub)}
+  .wardcard.on{border-color:var(--genba);box-shadow:0 0 0 1px var(--genba) inset}
+  .wardcard.on b{color:var(--genba)}
+  .wardcard.off{opacity:.5;cursor:not-allowed;background:var(--bg)}
+  .crumb2{font-size:.74rem;color:var(--sub);margin:3px 0 4px}
+  .crumb2 b{color:var(--genba)}
+  .crumb2 .reselect{color:#2563eb;cursor:pointer;text-decoration:underline;margin-left:8px}
   .cammodal{position:absolute;inset:0;border-radius:20px;background:rgba(11,18,32,.92);display:flex;align-items:center;justify-content:center;z-index:50;padding:10px}
   .cambox{background:#0b1220;border-radius:14px;padding:10px;max-width:100%;width:100%}
   .camtop{color:#e2e8f0;font-size:.74rem;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:700}
@@ -360,7 +370,12 @@ function inflate(raw){
   return o;
 }
 
-const state={ role:"suido", kouji:"1639560", tab:"hub", axis:"koku", sel:null, genbaRoute:null, confirmed:{}, filter:"all", highlight:null, myKoku:null, regSel:[], photos:{} };
+const state={ role:"suido", kouji:"1639560", tab:"hub", axis:"koku", sel:null, genbaRoute:null, confirmed:{}, filter:"all", highlight:null, myKoku:null, regSel:[], photos:{}, regWard:null };
+const WARDS=[
+  {name:"葛飾区", active:true, note:"現在 No.1〜No.4（4工区）"},
+  {name:"江戸川区", active:false, note:"担当工区なし"},
+  {name:"足立区", active:false, note:"担当工区なし"}
+];
 
 /* 永続化 */
 const LSKEY='suido_axis_v4';
@@ -420,7 +435,7 @@ function fillKouji(){
   const sel=document.getElementById("koujiSel");
   sel.innerHTML=Object.keys(DB).map(k=>`<option value="${k}">${DB[k].no}</option>`).join("");
   sel.value=state.kouji;
-  sel.addEventListener("change",()=>{ state.kouji=sel.value; state.sel=null; state.genbaRoute=null; state.highlight=null; state.myKoku=null; state.regSel=[]; state.photos={}; renderAll(); });
+  sel.addEventListener("change",()=>{ state.kouji=sel.value; state.sel=null; state.genbaRoute=null; state.highlight=null; state.myKoku=null; state.regSel=[]; state.photos={}; state.regWard=null; renderAll(); });
 }
 function renderHeader(){
   const k=cur();
@@ -433,20 +448,34 @@ function renderGenba(){
   const chips=document.getElementById("genbaChips");
   const f=document.getElementById("genbaForm");
   const topLabel=document.getElementById("genbaTopLabel");
-  // ── ① 未登録なら「担当工区の登録」画面（水道局と同じ配管図から自分の工区を選ぶ）
+  // ── ① 未登録：担当エリア(区)→ 担当工区 の順で登録する
   if(!state.myKoku || !state.myKoku.length){
     if(topLabel) topLabel.style.display="none";
     chips.innerHTML="";
+    // 1) 区の選択（東京都 二十三区・デモは3区）
+    if(!state.regWard){
+      f.innerHTML=`
+        <div style="font-weight:700;font-size:.86rem;margin-top:2px">担当エリアの選択</div>
+        <p class="note" style="margin:3px 0 8px">東京都 二十三区から、自分の<b>担当区</b>を選びます。<span style="color:var(--sub)">（このデモは3区）</span></p>
+        <div class="wardgrid">${WARDS.map(w=>`
+          <button class="wardcard ${w.active?'on':'off'}" ${w.active?`data-ward="${w.name}"`:'disabled'}>
+            <b>${w.name}</b><span>${w.active?('現在 No.1〜No.'+numberedKokus().length+'（'+numberedKokus().length+'工区）'):w.note}</span></button>`).join("")}</div>`;
+      f.querySelectorAll(".wardcard[data-ward]").forEach(b=>b.addEventListener("click",()=>{ state.regWard=b.dataset.ward; renderGenba(); }));
+      return;
+    }
+    // 2) 区を選んだら → その区の配管図(No.1〜No.4)から担当工区を登録
     f.innerHTML=`
-      <div style="font-weight:700;font-size:.86rem;margin-top:2px">担当工区の登録</div>
-      <p class="note" style="margin:3px 0 6px">水道局と同じ配管図です。<b>自分が担当する工区をタップ</b>して登録してください。<br>登録した工区<b>だけ</b>が入力対象になります。</p>
+      <div class="crumb2">📍 東京都 › <b>${state.regWard}</b><span class="reselect" id="reselWard">区を選び直す</span></div>
+      <div style="font-weight:700;font-size:.86rem">担当工区の登録<span style="font-weight:400;color:var(--sub);font-size:.76rem">（${state.regWard}・現在 No.${numberedKokus().length} まで）</span></div>
+      <p class="note" style="margin:3px 0 6px">配水管の配管図です。<b>自分が担当する工区をタップ</b>して登録してください。登録した工区<b>だけ</b>が入力対象になります。</p>
       ${genbaMapSVG()}
       <button class="btn genba full" style="margin-top:10px${state.regSel.length?'':';opacity:.5;pointer-events:none'}" onclick="commitRegister()">この工区を担当として登録（${state.regSel.length}）</button>`;
     f.querySelectorAll(".gseg").forEach(e=>e.addEventListener("click",()=>toggleRegKoku(e.dataset.k)));
+    const rw=document.getElementById("reselWard"); if(rw) rw.addEventListener("click",reselectWard);
     return;
   }
   // ── ② 登録済み：自分の担当工区だけをチップ表示
-  if(topLabel){ topLabel.style.display="block"; topLabel.textContent="担当工区（自分の担当）"; }
+  if(topLabel){ topLabel.style.display="block"; topLabel.textContent="担当工区（"+(state.regWard||"自分の担当")+"）"; }
   const kokus=state.myKoku;
   if(state.genbaRoute && !kokus.includes(state.genbaRoute)) state.genbaRoute=null;
   chips.innerHTML=kokus.map(k=>{
@@ -475,8 +504,10 @@ function renderGenba(){
     <button class="btn genba full" onclick="submitGenba('${koku}')">この工区の出来形を提出する</button>`;
 }
 /* ── 担当工区の登録（水道局と同じ配管図） ── */
+/* 現場の「担当工区」は番号付き工区(No.1〜)のみ。共通(諸作業)・給水(取付替)等の作業区分は除外。 */
+function numberedKokus(){ return kokuList().filter(k=>/^No\.\d+/.test(k)); }
 function genbaMapSVG(){
-  const kokus=kokuList(), n=kokus.length, top=34, bottom=410, cx=200;
+  const kokus=numberedKokus(), n=kokus.length, top=34, bottom=410, cx=200;
   const ys=[],xs=[];
   for(let i=0;i<=n;i++){ ys.push(top+(bottom-top)*i/n); xs.push(cx+(i%2===0?-34:34)); }
   xs[0]=cx;
@@ -495,7 +526,8 @@ function toggleRegKoku(k){ const i=state.regSel.indexOf(k); if(i>=0)state.regSel
 function commitRegister(){ if(!state.regSel.length)return; state.myKoku=[...state.regSel]; state.genbaRoute=state.myKoku[0]; renderGenba();
   const t=document.getElementById("gtoast"); if(t){t.style.display="block"; t.innerHTML=`✓ 担当工区（${state.myKoku.map(lblKoku).join("・")}）を登録しました。以後この工区だけ入力できます。`;} }
 function reRegister(){ state.myKoku=null; state.regSel=[]; state.genbaRoute=null; renderGenba(); }
-window.commitRegister=commitRegister; window.reRegister=reRegister;
+function reselectWard(){ state.regWard=null; state.regSel=[]; renderGenba(); }
+window.commitRegister=commitRegister; window.reRegister=reRegister; window.reselectWard=reselectWard;
 /* ── 出来形写真（ダミーの工事現場写真＝黒板つき）── */
 function repRec(koku){ const rs=recs().filter(r=>r.koku===koku); return rs.find(r=>r.unit==="m")||rs[0]||{}; }
 function persistGenbaInputs(koku){
@@ -808,7 +840,7 @@ window.editRec=editRec; window.addRec=addRec; window.delRec=delRec;
 document.getElementById("resetAllBtn").addEventListener("click",()=>{
   if(!confirm("入力を全消去してサンプルに戻しますか？"))return;
   try{ localStorage.removeItem(LSKEY); }catch(e){}
-  DB=inflate(RAW); state.confirmed={}; state.kouji=Object.keys(DB)[0]; state.sel=null; state.genbaRoute=null; state.highlight=null; state.myKoku=null; state.regSel=[]; state.photos={};
+  DB=inflate(RAW); state.confirmed={}; state.kouji=Object.keys(DB)[0]; state.sel=null; state.genbaRoute=null; state.highlight=null; state.myKoku=null; state.regSel=[]; state.photos={}; state.regWard=null;
   fillKouji(); renderAll();
 });
 
