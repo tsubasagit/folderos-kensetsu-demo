@@ -177,7 +177,7 @@
   </div>
   <span class="local">🔒 社内の内部データを処理</span>
 </header>
-<div class="ribbon"><b>第1639560号</b>（葛飾区柴又七丁目〜四丁目・東部第二支所配水課）の<b>完成図・数量計算書</b>に準拠した画面イメージ（ガワ）。工区No.1〜4・管理番号001-01形式・工種コード・占用番号は実様式。受注者名は匿名化、数量は実延長ベース＋説明用に一部調整、単価は<b>金抜き</b>のため非表示。機微処理は閉域ローカルで実行（現場スマホ入力のみインターネットを利用）。</div>
+<div class="ribbon"><b>第1600000号</b>（葛飾区柴又七丁目〜四丁目・東部第二支所配水課）の<b>完成図・数量計算書</b>に準拠した画面イメージ（ガワ）。工区No.1〜4・管理番号001-01形式・工種コード・占用番号は実様式。受注者名は匿名化、数量は実延長ベース＋説明用に一部調整、単価は<b>金抜き</b>のため非表示。機微処理は閉域ローカルで実行（現場スマホ入力のみインターネットを利用）。</div>
 
 <div class="modebar suido" id="modebar">
   <span id="modeText"></span>
@@ -302,7 +302,7 @@
 </div>
 
 <footer>
-  FolderOS 建設Form デモ（ガワ）｜株式会社AppTalentHub　|　データは御局提供サンプル（第1639560号）を匿名化。機微な内部データは外部に出しません（現場スマホ入力はインターネットを利用）。
+  FolderOS 建設Form デモ（ガワ）｜株式会社AppTalentHub　|　データは御局提供サンプル（第1600000号）を匿名化。機微な内部データは外部に出しません（現場スマホ入力はインターネットを利用）。
 </footer>
 
 <script>
@@ -314,8 +314,8 @@
    plan=予定積算（週報累積・設計）, actual=完成後積算（完成図の実延長）, null=現場未提出
    ============================================================ */
 const RAW = {
-  "1639560":{
-    no:"第1639560号", name:"配水小管布設替工事（柴又七丁目3番〜四丁目9番地先／請負単価契約）",
+  "1600000":{
+    no:"第1600000号", name:"配水小管布設替工事（柴又七丁目3番〜四丁目9番地先／請負単価契約）",
     office:"東部第二支所 配水課", area:"葛飾区柴又七丁目〜四丁目", contractor:"（受注者A・匿名化）", period:"令和7.7.22〜11.21",
     // [koku, occ, mng, code, name, spec, unit, plan, actual]
     recs:[
@@ -347,8 +347,8 @@ const RAW = {
       ["給水(取付替)","—","給-03","6501","給水管諸作業","—","式",1,null]
     ]
   },
-  "1642318":{
-    no:"第1642318号（想定例）", name:"配水小管布設替工事（想定例／請負単価契約）",
+  "1600020":{
+    no:"第1600020号（想定例）", name:"配水小管布設替工事（想定例／請負単価契約）",
     office:"東部第二支所 配水課", area:"葛飾区新宿", contractor:"（受注者B・匿名化）", period:"令和7年度",
     recs:[
       ["No.1工区","区道(葛飾)800220","001-01","5101","配水小管 新設(GX)","φ150 FCD.GX","m",63.0,62.3],
@@ -370,7 +370,7 @@ function inflate(raw){
   return o;
 }
 
-const state={ role:"suido", kouji:"1639560", tab:"hub", axis:"koku", sel:null, genbaRoute:null, confirmed:{}, filter:"all", highlight:null, myKoku:null, regSel:[], photos:{}, regWard:null };
+const state={ role:"suido", kouji:"1600000", tab:"hub", axis:"koku", sel:null, genbaRoute:null, confirmed:{}, filter:"all", highlight:null, myKoku:null, regSel:[], photos:{}, regWard:null };
 const WARDS=[
   {name:"葛飾区", active:true, note:"現在 No.1〜No.4（4工区）"},
   {name:"△△区", active:false, note:"担当工区なし（匿名）"},
