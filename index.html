@@ -91,6 +91,11 @@
   .dockpick-actions{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
   .dockpick-count{margin-left:auto;font-size:.82rem;color:var(--primary-d);font-weight:800}
   @media print{.dockpick{display:none}}
+  .keybox{margin-top:10px;border:1px solid #f0dcb6;border-radius:8px;overflow:hidden;background:#fff7ed}
+  .keybox>div{display:flex;justify-content:space-between;gap:8px;padding:6px 10px;font-size:.79rem;border-top:1px solid #f3e4c6}
+  .keybox>div:first-child{border-top:0}
+  .keybox .kl{color:#92600e;font-weight:700}
+  .keybox .kv{font-weight:700;font-family:monospace;color:#1e293b;text-align:right}
   .col-plan{background:#f1f5f9}.col-actual{background:#eff6ff}
   .diff-pos{color:#b45309;font-weight:700}.diff-zero{color:var(--sub)}.diff-na{color:#94a3b8}
   .fixval{font-weight:700;color:var(--primary)}
@@ -403,7 +408,7 @@ function inflate(raw){
   return o;
 }
 
-const state={ role:"suido", kouji:"1600000", tab:"hub", axis:"koku", sel:null, genbaRoute:null, confirmed:{}, filter:"all", highlight:null, myKoku:null, regSel:[], photos:{}, regWard:null, notes:{}, docKokus:[] };
+const state={ role:"suido", kouji:"1600000", tab:"hub", axis:"koku", sel:null, genbaRoute:null, confirmed:{}, filter:"all", highlight:null, myKoku:null, regSel:[], photos:{}, regWard:null, notes:{}, docKokus:[], regKouji:null };
 const WARDS=[
   {name:"葛飾区", active:true, note:"現在 No.1〜No.4（4工区）"},
   {name:"△△区", active:false, note:"担当工区なし（匿名）"},
@@ -468,7 +473,7 @@ function fillKouji(){
   const sel=document.getElementById("koujiSel");
   sel.innerHTML=Object.keys(DB).map(k=>`<option value="${k}">${DB[k].no}</option>`).join("");
   sel.value=state.kouji;
-  sel.addEventListener("change",()=>{ state.kouji=sel.value; state.sel=null; state.genbaRoute=null; state.highlight=null; state.myKoku=null; state.regSel=[]; state.photos={}; state.regWard=null; renderAll(); });
+  sel.addEventListener("change",()=>{ state.kouji=sel.value; state.sel=null; state.genbaRoute=null; state.highlight=null; state.myKoku=null; state.regSel=[]; state.photos={}; state.regWard=null; state.regKouji=null; renderAll(); });
 }
 function renderHeader(){
   const k=cur();
@@ -496,15 +501,32 @@ function renderGenba(){
       f.querySelectorAll(".wardcard[data-ward]").forEach(b=>b.addEventListener("click",()=>{ state.regWard=b.dataset.ward; renderGenba(); }));
       return;
     }
-    // 2) 区を選んだら → その区の配管図(No.1〜No.4)から担当工区を登録
+    // 2) 工事番号の選択（この地区の工事）
+    if(!state.regKouji){
+      const koujis=Object.keys(DB);
+      f.innerHTML=`
+        <div class="crumb2">📍 東京都 › <b>${state.regWard}</b><span class="reselect" id="reselWard">区を選び直す</span></div>
+        <div style="font-weight:700;font-size:.86rem">工事番号の選択</div>
+        <p class="note" style="margin:3px 0 8px">担当する<b>工事番号</b>を選びます。<span style="color:var(--sub)">（${state.regWard}の工事）</span></p>
+        <div class="wardgrid">${koujis.map(kj=>`
+          <button class="wardcard on" data-kouji="${kj}"><b>${DB[kj].no}</b><span>${DB[kj].name.split("（")[0]}</span></button>`).join("")}</div>`;
+      f.querySelectorAll(".wardcard[data-kouji]").forEach(b=>b.addEventListener("click",()=>{
+        state.kouji=b.dataset.kouji; state.regKouji=b.dataset.kouji; state.regSel=[];
+        const ks=document.getElementById("koujiSel"); if(ks) ks.value=state.kouji;
+        renderGenba();
+      }));
+      const rw0=document.getElementById("reselWard"); if(rw0) rw0.addEventListener("click",reselectWard);
+      return;
+    }
+    // 3) 工事を選んだら → その工事の配管図(No.1〜)から担当工区を登録
     f.innerHTML=`
-      <div class="crumb2">📍 東京都 › <b>${state.regWard}</b><span class="reselect" id="reselWard">区を選び直す</span></div>
+      <div class="crumb2">📍 東京都 › ${state.regWard} › <b>${cur().no}</b><span class="reselect" id="reselKouji">工事を選び直す</span></div>
       <div style="font-weight:700;font-size:.86rem">担当工区の登録<span style="font-weight:400;color:var(--sub);font-size:.76rem">（${state.regWard}・現在 No.${numberedKokus().length} まで）</span></div>
       <p class="note" style="margin:3px 0 6px">配水管の配管図です。<b>自分が担当する工区をタップ</b>して登録してください。登録した工区<b>だけ</b>が入力対象になります。</p>
       ${genbaMapSVG()}
       <button class="btn genba full" style="margin-top:10px${state.regSel.length?'':';opacity:.5;pointer-events:none'}" onclick="commitRegister()">この工区を担当として登録（${state.regSel.length}）</button>`;
     f.querySelectorAll(".gseg").forEach(e=>e.addEventListener("click",()=>toggleRegKoku(e.dataset.k)));
-    const rw=document.getElementById("reselWard"); if(rw) rw.addEventListener("click",reselectWard);
+    const rk=document.getElementById("reselKouji"); if(rk) rk.addEventListener("click",reselectKouji);
     return;
   }
   // ── ② 登録済み：自分の担当工区だけをチップ表示
@@ -529,8 +551,12 @@ function renderGenba(){
       <input id="gi_${i}" inputmode="decimal" value="${r.actual==null?'':r.actual}" ${locked?'disabled':''} placeholder="実測値を入力">
     </div>`;}).join("");
   f.innerHTML=`
-    <div style="margin-top:10px;font-weight:700;font-size:.86rem">工区 ${koku}</div>
-    <div class="pl" style="font-size:.74rem;color:var(--sub)">${occOf(koku)}</div>
+    <div class="keybox">
+      <div><span class="kl">工事番号</span><span class="kv">${cur().no}</span></div>
+      <div><span class="kl">工区</span><span class="kv">${koku}</span></div>
+      <div><span class="kl">占用路線</span><span class="kv">${occOf(koku)}</span></div>
+    </div>
+    <div class="pl" style="font-size:.72rem;color:var(--sub);margin:4px 0 2px">↓ <b>管理番号</b>ごとに出来形を入力（水道局はこの3キーで突合します）</div>
     ${items}
     <label style="margin-top:10px">出来形写真（工事結果）</label>
     <div class="thumbs" id="genbaThumbs">${thumbsHTML(koku)}</div>
@@ -559,8 +585,9 @@ function toggleRegKoku(k){ const i=state.regSel.indexOf(k); if(i>=0)state.regSel
 function commitRegister(){ if(!state.regSel.length)return; state.myKoku=[...state.regSel]; state.genbaRoute=state.myKoku[0]; renderGenba();
   const t=document.getElementById("gtoast"); if(t){t.style.display="block"; t.innerHTML=`✓ 担当工区（${state.myKoku.map(lblKoku).join("・")}）を登録しました。以後この工区だけ入力できます。`;} }
 function reRegister(){ state.myKoku=null; state.regSel=[]; state.genbaRoute=null; renderGenba(); }
-function reselectWard(){ state.regWard=null; state.regSel=[]; renderGenba(); }
-window.commitRegister=commitRegister; window.reRegister=reRegister; window.reselectWard=reselectWard;
+function reselectWard(){ state.regWard=null; state.regKouji=null; state.regSel=[]; renderGenba(); }
+function reselectKouji(){ state.regKouji=null; state.regSel=[]; renderGenba(); }
+window.commitRegister=commitRegister; window.reRegister=reRegister; window.reselectWard=reselectWard; window.reselectKouji=reselectKouji;
 /* ── 出来形写真（ダミーの工事現場写真＝黒板つき）── */
 function repRec(koku){ const rs=recs().filter(r=>r.koku===koku); return rs.find(r=>r.unit==="m")||rs[0]||{}; }
 function persistGenbaInputs(koku){
@@ -878,7 +905,6 @@ function renderDoc(){
       <tr class="totalrow"><td class="l">工事番号 合計（選択工区）</td><td>工区 ${kokus.length} 件</td><td>管理番号 ${mngUnits().filter(u=>kokus.includes(u.koku)).length} 件</td>
         <td>科目 ${gItem} 件</td><td class="col-plan">予定 ${gPlan.toFixed(1)} m</td><td colspan="3">確定 新設φ150 延長</td><td><b>${gFix.toFixed(1)} m</b></td></tr>
     </table>
-    <p style="font-size:.82rem;margin:12px 0 0;line-height:1.7">本表はFolderOSが<b>予定積算（週報累積）</b>と<b>完成後積算（完成図の実延長）</b>を管理番号ごとに突合し、<b>差分 ${gMis} 件</b>を抽出、確認者が妥当性を判断のうえ確定した数量です。番号は統一せず、各書類の固有番号を管理番号に名寄せしています。</p>
     <div class="signblk">
       <div><div class="lb">照合（FolderOS）</div>自動突合 済</div>
       <div><div class="lb">確認者（水道局）</div>　</div>
@@ -921,7 +947,7 @@ window.editRec=editRec; window.addRec=addRec; window.delRec=delRec;
 document.getElementById("resetAllBtn").addEventListener("click",()=>{
   if(!confirm("入力を全消去してサンプルに戻しますか？"))return;
   try{ localStorage.removeItem(LSKEY); }catch(e){}
-  DB=inflate(RAW); state.confirmed={}; state.kouji=Object.keys(DB)[0]; state.sel=null; state.genbaRoute=null; state.highlight=null; state.myKoku=null; state.regSel=[]; state.photos={}; state.regWard=null;
+  DB=inflate(RAW); state.confirmed={}; state.kouji=Object.keys(DB)[0]; state.sel=null; state.genbaRoute=null; state.highlight=null; state.myKoku=null; state.regSel=[]; state.photos={}; state.regWard=null; state.regKouji=null; state.docKokus=[]; state.notes={};
   fillKouji(); renderAll();
 });
 
