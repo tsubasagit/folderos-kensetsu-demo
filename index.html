@@ -63,9 +63,24 @@
   .warnrow{background:#fef2f2}
   .rhead td{background:#eef5fa;font-weight:700;text-align:left;font-size:.85rem}
   .rhead .st{float:right;font-weight:700}
-  .secrow td{background:#dbeafe;font-weight:700;text-align:left;font-size:.86rem;color:var(--primary-d)}
+  .secrow td{background:#dbeafe;font-weight:800;text-align:left;font-size:1.05rem;padding:12px 12px;color:var(--primary-d)}
+  .secrow .knum{font-size:1.3rem;font-weight:800}
+  .secrow .kocc{font-weight:500;color:var(--sub);font-size:.95rem}
   .secrow .st{float:right;font-weight:700}
   .secrow.hl td{box-shadow:inset 0 0 0 2px var(--primary)}
+  .notememo{font-size:.72rem;font-weight:700;color:#b45309;background:#fef3c7;border:1px solid #fcd34d;border-radius:999px;padding:2px 9px;margin-left:8px}
+  .noterow td{background:#fffdf5;text-align:left;padding:6px 12px}
+  .noterow summary{cursor:pointer;font-size:.84rem;font-weight:700;color:#92600e;list-style:none}
+  .noterow summary::-webkit-details-marker{display:none}
+  .noterow summary::before{content:"▸ ";color:#b45309}
+  .noterow details[open] summary::before{content:"▾ "}
+  .notewrap{display:flex;flex-direction:column;gap:7px;margin:8px 0 4px}
+  .reasonrow{display:flex;flex-wrap:wrap;gap:6px}
+  .reasonlbl{font-size:.76rem;color:var(--sub);align-self:center}
+  .rchip{border:1px solid #e6b800;background:#fff;color:#7a5a14;border-radius:999px;padding:4px 11px;font-size:.78rem;cursor:pointer;user-select:none}
+  .rchip.on{background:#f59e0b;color:#fff;border-color:#f59e0b}
+  .notetext{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.84rem;font-family:inherit;min-height:48px;resize:vertical}
+  .notestamp{font-size:.74rem;color:#16a34a;font-weight:700;min-height:1em}
   .col-plan{background:#f1f5f9}.col-actual{background:#eff6ff}
   .diff-pos{color:#b45309;font-weight:700}.diff-zero{color:var(--sub)}.diff-na{color:#94a3b8}
   .fixval{font-weight:700;color:var(--primary)}
@@ -377,7 +392,7 @@ function inflate(raw){
   return o;
 }
 
-const state={ role:"suido", kouji:"1600000", tab:"hub", axis:"koku", sel:null, genbaRoute:null, confirmed:{}, filter:"all", highlight:null, myKoku:null, regSel:[], photos:{}, regWard:null };
+const state={ role:"suido", kouji:"1600000", tab:"hub", axis:"koku", sel:null, genbaRoute:null, confirmed:{}, filter:"all", highlight:null, myKoku:null, regSel:[], photos:{}, regWard:null, notes:{} };
 const WARDS=[
   {name:"葛飾区", active:true, note:"現在 No.1〜No.4（4工区）"},
   {name:"△△区", active:false, note:"担当工区なし（匿名）"},
@@ -386,8 +401,8 @@ const WARDS=[
 
 /* 永続化 */
 const LSKEY='suido_axis_v4';
-function saveDB(){ try{ localStorage.setItem(LSKEY, JSON.stringify({data:DB, confirmed:state.confirmed})); }catch(e){} }
-function loadDB(){ try{ const s=localStorage.getItem(LSKEY); if(s){ const o=JSON.parse(s); if(o&&o.confirmed) state.confirmed=o.confirmed; if(o&&o.data) return o.data; } }catch(e){} return null; }
+function saveDB(){ try{ localStorage.setItem(LSKEY, JSON.stringify({data:DB, confirmed:state.confirmed, notes:state.notes})); }catch(e){} }
+function loadDB(){ try{ const s=localStorage.getItem(LSKEY); if(s){ const o=JSON.parse(s); if(o&&o.confirmed) state.confirmed=o.confirmed; if(o&&o.notes) state.notes=o.notes; if(o&&o.data) return o.data; } }catch(e){} return null; }
 let DB = loadDB() || inflate(RAW);
 if(!DB[state.kouji]) state.kouji=Object.keys(DB)[0];
 
@@ -710,9 +725,11 @@ function renderConfirm(){
     vis.forEach(u=>{
       if(axis==="koku" && u.koku!==curKoku){
         curKoku=u.koku; const ks=statusK(u.koku),[kbc,kbl]=BADGE[ks];
-        html+=`<tr class="secrow${state.highlight===u.koku?' hl':''}" id="sec-${cssId(u.koku)}"><td colspan="8">🗺️ 工区 ${u.koku}　<span style="font-weight:400;color:var(--sub)">${occOf(u.koku)}</span>`+
+        html+=`<tr class="secrow${state.highlight===u.koku?' hl':''}" id="sec-${cssId(u.koku)}"><td colspan="8">🗺️ <span class="knum">工区 ${u.koku}</span>　<span class="kocc">${occOf(u.koku)}</span>`+
+          (hasNote(u.koku)?`<span class="notememo">📝 訂正メモあり</span>`:``)+
           `<span class="st"><span class="badge ${kbc}">${kbl}</span>`+
           `<button class="btn sm" style="margin-left:8px" onclick="confirmKoku('${u.koku}')">✔ 工区まるごと確定</button></span></td></tr>`;
+        html+=noteRowHTML(u.koku);
       }
       const s=statusM(u),[bc,bl]=BADGE[s];
       html+=`<tr class="rhead" id="mng-${cssId(u.mng)}"><td colspan="8">🔑 管理番号 <b style="color:var(--primary);font-family:monospace">${u.mng}</b>`+
@@ -755,6 +772,25 @@ function confirmKoku(koku){
   saveDB(); renderSuido();
 }
 window.confirmMng=confirmMng; window.confirmKoku=confirmKoku;
+/* ── 数量の訂正・コメント（工区ごと）── */
+const REASONS=["数量誤り","測定・拾い出しミス","二重計上","単位・数量計算の相違","設計変更","その他"];
+function hasNote(koku){ const n=state.notes[koku]; return !!(n && ((n.reasons&&n.reasons.length)||(n.comment&&n.comment.trim()))); }
+function ensureNote(koku){ return state.notes[koku]=state.notes[koku]||{reasons:[],comment:""}; }
+function noteRowHTML(koku){
+  const n=state.notes[koku]||{reasons:[],comment:""};
+  const chips=REASONS.map(rz=>`<span class="rchip${(n.reasons||[]).includes(rz)?' on':''}" onclick="toggleReason('${koku}','${rz}',this)">${rz}</span>`).join("");
+  return `<tr class="noterow"><td colspan="8"><details ${hasNote(koku)?'open':''}>`+
+    `<summary>📝 数量の訂正・申し送り（${lblKoku(koku)}工区 ／ ${occOf(koku)}）${hasNote(koku)?' — 記入あり':''}</summary>`+
+    `<div class="notewrap">`+
+      `<div class="reasonrow"><span class="reasonlbl">訂正区分：</span>${chips}</div>`+
+      `<textarea class="notetext" placeholder="訂正の理由・どこがどう間違っていたか・申し送りを記入（例：管理番号 001-04 は再測定により 3.5→3.6m に訂正。写真帳P12参照）" oninput="saveNote('${koku}',this.value)">${esc(n.comment||"")}</textarea>`+
+      `<span class="notestamp" id="ns-${cssId(koku)}">${hasNote(koku)?'保存済み ✓':''}</span>`+
+    `</div></details></td></tr>`;
+}
+function toggleReason(koku,reason,el){ const n=ensureNote(koku); n.reasons=n.reasons||[]; const i=n.reasons.indexOf(reason); if(i>=0)n.reasons.splice(i,1); else n.reasons.push(reason); el.classList.toggle("on"); saveDB(); markSaved(koku); }
+function saveNote(koku,val){ ensureNote(koku).comment=val; saveDB(); markSaved(koku); }
+function markSaved(koku){ const s=document.getElementById("ns-"+cssId(koku)); if(s)s.textContent="保存しました ✓"; }
+window.toggleReason=toggleReason; window.saveNote=saveNote;
 document.getElementById("confirmAll").addEventListener("click",()=>{ mngUnits().forEach(u=>{ if(hasActualM(u)) state.confirmed[CK(u.mng)]=true; }); saveDB(); renderSuido(); });
 document.getElementById("resetConfirm").addEventListener("click",()=>{ mngUnits().forEach(u=>delete state.confirmed[CK(u.mng)]); saveDB(); renderSuido(); });
 document.getElementById("fltAll").addEventListener("click",()=>{ state.filter="all"; renderConfirm(); });
