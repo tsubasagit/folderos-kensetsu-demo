@@ -66,9 +66,9 @@
   .genbawrap{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start}
   @media(max-width:760px){.genbawrap{grid-template-columns:1fr}}
   .phone{background:#1e293b;border-radius:28px;padding:12px;width:300px;margin:0 auto}
-  .phone .scr{background:#fff;border-radius:20px;overflow:hidden}
+  .phone .scr{background:#fff;border-radius:20px;overflow:hidden;position:relative}
   .phone .bar{background:var(--genba);color:#fff;padding:11px 14px;font-size:.86rem;font-weight:700;display:flex;justify-content:space-between;align-items:center}
-  .phone .body{padding:13px 14px;font-size:.82rem;max-height:560px;overflow:auto}
+  .phone .body{padding:13px 14px;font-size:.82rem;height:540px;overflow:auto}
   .phone label{color:var(--sub);font-size:.72rem;display:block;margin-top:10px}
   .chiprow{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
   .chip{border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:.76rem;cursor:pointer;background:#fff}
@@ -87,8 +87,8 @@
   .gseg{stroke-linecap:round;cursor:pointer}
   .gseg.pick{filter:drop-shadow(0 0 5px rgba(180,83,9,.55))}
   .glbl{font-size:13px;fill:#334155;pointer-events:none}
-  .cammodal{position:fixed;inset:0;background:rgba(15,23,42,.74);display:flex;align-items:center;justify-content:center;z-index:200;padding:18px}
-  .cambox{background:#0b1220;border-radius:16px;padding:12px;max-width:360px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+  .cammodal{position:absolute;inset:0;border-radius:20px;background:rgba(11,18,32,.92);display:flex;align-items:center;justify-content:center;z-index:50;padding:10px}
+  .cambox{background:#0b1220;border-radius:14px;padding:10px;max-width:100%;width:100%}
   .camtop{color:#e2e8f0;font-size:.74rem;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:700}
   .camtop .rec{color:#f87171}
   .camview{border-radius:10px;overflow:hidden;border:2px solid #1e293b;position:relative}
@@ -557,7 +557,8 @@ function openCam(koku, viewIdx){
         : '<button class="camx" onclick="closeCam()">キャンセル</button><button class="shutter" onclick="shootPhoto(\''+koku+'\')">📸 撮影する</button>'}</div>
     </div></div>`;
   const host=document.createElement("div"); host.id="camhost"; host.innerHTML=html;
-  document.body.appendChild(host);
+  // カメラはスマホ枠の中で開く（枠の大きさは変えない）。
+  (document.querySelector("#genbaView .phone .scr")||document.body).appendChild(host);
   const m=document.getElementById("cammodal"); if(m) m.addEventListener("click",ev=>{ if(ev.target.id==="cammodal") closeCam(); });
 }
 function closeCam(){ const h=document.getElementById("camhost"); if(h) h.remove(); }
