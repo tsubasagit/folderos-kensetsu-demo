@@ -21,6 +21,13 @@
   .rolebtn.active{background:#fff;opacity:1}
   header:not(.genba) .rolebtn.active{color:var(--suido)}
   header.genba .rolebtn.active{color:var(--genba)}
+  .featbadge{display:flex;align-items:center;gap:14px;border-radius:14px;padding:12px 20px;margin:14px 0 6px;font-weight:800}
+  .featbadge .no{font-size:1.9rem;line-height:1;letter-spacing:.5px;white-space:nowrap}
+  .featbadge .ttl{font-size:1.15rem}
+  .featbadge .sub{font-size:.78rem;font-weight:600;opacity:.8;margin-left:auto;text-align:right}
+  .featbadge.f1{background:#eaf2f8;color:var(--suido);border:2px solid var(--suido)}
+  .featbadge.f2{background:#fff7ed;color:var(--genba);border:2px solid var(--genba)}
+  @media(max-width:560px){.featbadge .sub{display:none}.featbadge .no{font-size:1.5rem}}
   .ribbon{background:#fff7ed;border-bottom:1px solid #fed7aa;color:#9a3412;font-size:.76rem;padding:6px 18px;text-align:center}
   .modebar{padding:9px 18px;color:#fff;font-size:.83rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .modebar.genba{background:var(--genba)}
@@ -188,6 +195,7 @@
 <!-- ============ 現場用（受注者）============ -->
 <div id="genbaView" style="display:none">
   <div class="wrap">
+    <div class="featbadge f2"><span class="no">機能②</span><span class="ttl">現場用（受注者）</span><span class="sub">出来形をスマホで入力・提出</span></div>
     <h3 style="margin:0 0 10px">🏗️ 現場用アプリ（受注者）— 出来形の入力・提出 <span class="newbadge">ガワ</span></h3>
     <div class="genbawrap">
       <div class="phone">
@@ -223,6 +231,7 @@
 
 <!-- ============ 水道局用（発注者）============ -->
 <div id="suidoView">
+  <div class="wrap"><div class="featbadge f1"><span class="no">機能①</span><span class="ttl">水道局用（発注者）</span><span class="sub">差分確認・数量確定・確定表出力</span></div></div>
   <div class="subtabs" id="suidoTabs">
     <div class="subtab active" data-v="hub">🗺️ 図面ハブ（工区）① 起点</div>
     <div class="subtab" data-v="confirm">🧮 数量確定（多軸）②</div>
