@@ -321,7 +321,10 @@
     <section class="view" id="doc">
       <div class="pnav" style="max-width:860px;margin:0 auto 10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <h3 id="docTitle" style="margin:0">📄 工区・管理番号別 数量確定表</h3>
-        <button class="btn sm" style="margin-left:auto" onclick="window.print()">🖨️ 印刷／PDF保存</button>
+        <div style="margin-left:auto;display:flex;flex-direction:column;gap:6px;align-items:stretch">
+          <button class="btn sm" onclick="window.print()">🖨️ 印刷／PDF保存</button>
+          <button class="btn sm ghost" onclick="exportDocCsv()">⬇ CSV出力</button>
+        </div>
       </div>
       <div id="docKokuPicker" style="max-width:860px;margin:0 auto 12px"></div>
       <div class="doc" id="docSheet"></div>
@@ -834,6 +837,23 @@ function toggleDocKoku(k){ const i=state.docKokus.indexOf(k); if(i>=0)state.docK
 function selectAllDocKoku(){ state.docKokus=kokuList().filter(k=>statusK(k)==="fix"); renderDoc(); }
 function clearDocKoku(){ state.docKokus=[]; renderDoc(); }
 window.toggleDocKoku=toggleDocKoku; window.selectAllDocKoku=selectAllDocKoku; window.clearDocKoku=clearDocKoku;
+function exportDocCsv(){
+  const sel=state.docKokus.filter(kk=>statusK(kk)==="fix");
+  if(!sel.length){ alert("先に「確定表に出す工区」を選んでください。"); return; }
+  const k=cur();
+  const rows=[["工事番号","工区","占用路線","管理番号","工種コード","科目","規格","単位","予定数量","完成数量","差分","確定数量","確定状態"]];
+  sel.forEach(kk=>{ recs().filter(r=>r.koku===kk).forEach(r=>{
+    const d=diff(r), conf=isConf(r.mng);
+    rows.push([k.no,kk,r.occ,r.mng,r.code,r.name,r.spec,r.unit,r.plan,(r.actual==null?"":r.actual),(d==null?"":d),(r.actual==null?"":r.actual),conf?"確定済":""]);
+  });});
+  const q=v=>{ const s=String(v==null?"":v); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+  const csv="﻿"+rows.map(r=>r.map(q).join(",")).join("\r\n");
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download="数量確定表_"+state.kouji+".csv";
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+window.exportDocCsv=exportDocCsv;
 document.getElementById("confirmAll").addEventListener("click",()=>{ mngUnits().forEach(u=>{ if(hasActualM(u)) state.confirmed[CK(u.mng)]=true; }); saveDB(); renderSuido(); });
 document.getElementById("resetConfirm").addEventListener("click",()=>{ mngUnits().forEach(u=>delete state.confirmed[CK(u.mng)]); saveDB(); renderSuido(); });
 document.getElementById("fltAll").addEventListener("click",()=>{ state.filter="all"; renderConfirm(); });
