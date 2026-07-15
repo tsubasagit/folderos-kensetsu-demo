@@ -293,8 +293,8 @@
 
     <!-- 数量確定（多軸） -->
     <section class="view" id="confirm">
-      <h3 style="margin:0 0 6px">🧮 数量確定 — 管理番号を主キーに、軸を切り替えて束ねる <span class="newbadge">🆕 主役</span></h3>
-      <p style="font-size:.84rem;color:var(--sub);margin:0 0 10px"><b>予定積算（週報累積）</b>と<b>完成後積算（完成図の実延長）</b>を<b>管理番号ごと</b>に突合し、<b>差分だけ</b>を赤で表示。番号は統一せず、下の「束ねる軸」で見方だけを切り替えます。確定は施工箇所＝<b>管理番号</b>単位。</p>
+      <h3 style="margin:0 0 6px">🧮 数量確定 <span class="newbadge">🆕 主役</span></h3>
+      <p style="font-size:.84rem;color:var(--sub);margin:0 0 10px">予定と完成（出来形）を突き合わせ、<b>差がある所だけ</b>を赤で表示。確認して確定します。</p>
       <div class="axisbar">
         <span style="color:var(--sub);font-size:.82rem">束ねる軸：</span>
         <button class="abtn on" data-axis="koku">🗺️ 工区</button>
@@ -320,7 +320,7 @@
     <!-- 印刷 -->
     <section class="view" id="doc">
       <div class="pnav" style="max-width:860px;margin:0 auto 10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <h3 style="margin:0">📄 工区・管理番号別 数量確定表</h3>
+        <h3 id="docTitle" style="margin:0">📄 工区・管理番号別 数量確定表</h3>
         <button class="btn sm" style="margin-left:auto" onclick="window.print()">🖨️ 印刷／PDF保存</button>
       </div>
       <div id="docKokuPicker" style="max-width:860px;margin:0 auto 12px"></div>
@@ -852,6 +852,7 @@ document.querySelectorAll(".subtab").forEach(t=>t.addEventListener("click",()=>{
 /* ============ 印刷帳票（工区→管理番号→工種）============ */
 function renderDoc(){
   const k=cur(), today="2026年 7月 21日";
+  const dt=document.getElementById("docTitle"); if(dt) dt.innerHTML=`📄 工事番号 <b>${k.no}</b> ／ 工区・管理番号別 数量確定表`;
   const all=kokuList();
   const sel=state.docKokus.filter(kk=>statusK(kk)==="fix");
   const anyFixed=all.some(kk=>statusK(kk)==="fix");
